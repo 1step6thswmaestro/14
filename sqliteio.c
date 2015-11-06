@@ -42,7 +42,7 @@ void write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, 
 	alloc_new_entry(volume, root_cluster_number, file_name, &dentry);
 }
 
-int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u128 offset)
+int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
 {
 	if(buff == NULL)
 	{
