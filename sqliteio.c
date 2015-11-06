@@ -42,7 +42,7 @@ void write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, 
 	alloc_new_entry(volume, root_cluster_number, file_name, &dentry);
 }
 
-void read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff)
+int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff)
 {
 	int n_read = 0;
 	u128 cluster_number;
@@ -59,10 +59,8 @@ void read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, c
 	buff = malloc(len);
 	if (buff == NULL)
 	{
-		return;
+		return -1;
 	}
-
-	printf("File Size: %d %d\n", len);
 
 	while (offset < len)
 	{
@@ -80,4 +78,6 @@ void read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, c
 	}
 
 	free(buff);
+
+	return len;
 }
