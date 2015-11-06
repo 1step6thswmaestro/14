@@ -25,30 +25,30 @@ struct mfs_volume* open_sqlite_volume(char* device_name)
 	return volume;
 }
 
-void write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
+void create_sqlite_file(struct mfs_volume* volume, char* route, char* file_name)
 {
-	struct mfs_dirent dentry;
-
-	int n_write = 0;
-	int n_total = 0;
-
 	__mfs_create(volume, route, file_name);
+}
 
-	u128 root_cluster_number = get_cluster_number(volume, route);
-	get_dentry(volume, root_cluster_number, file_name, &dentry);
-
-	while (len > 0)
+int write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
+{
+	if(buff == NULL)
 	{
-		n_write = write_file(volume, &dentry, buff, len, offset);
-
-		offset += n_write;
-		buff += n_write;
-		len -= n_write;
-
-		if(n_write <= 0) break;
+		return -1;
 	}
 
+	int n_write = 0;
+
+	u128 root_cluster_number = get_cluster_number(volume, route);
+	struct mfs_dirent dentry;
+
+	get_dentry(volume, root_cluster_number, file_name, &dentry);
+
+	n_write = write_file(volume, &dentry, buff, len, offset);
+
 	alloc_new_entry(volume, root_cluster_number, file_name, &dentry);
+
+	return n_write;
 }
 
 int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
