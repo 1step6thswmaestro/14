@@ -12,27 +12,25 @@
 #define SECTORS_OF_SUPER_BLK 					(sizeof(struct mfs_sb_info) / BYTES_PER_SECTOR)
 #define SECTORS_OF_FAT(total_cluster_size)		(total_cluster_size * mfs_fat_index_size(total_cluster_size)) / BYTES_PER_SECTOR
 
-#define BYTE_TO_DEC(byte) pow(2, byte)
-
 inline u16_t mfs_fat_index_size(u128 total_cluster_size)
 {
-	if (total_cluster_size < BYTE_TO_DEC(1))
+	if (total_cluster_size < 256)
 	{
 		return 1;
 	}
-	else if (total_cluster_size < BYTE_TO_DEC(2))
+	else if (total_cluster_size < 256 * 256)
 	{
 		return 2;
 	}
-	else if (total_cluster_size < BYTE_TO_DEC(4))
+	else if (total_cluster_size < 256 * 256 * 256 * 256)
 	{
 		return 4;
 	}
-	else if (total_cluster_size < BYTE_TO_DEC(8))
+	else if (total_cluster_size < 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256)
 	{
 		return 8;
 	}
-	else if (total_cluster_size < BYTE_TO_DEC(8))
+	else if (total_cluster_size < 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256 * 256)
 	{
 		return 16;
 	}

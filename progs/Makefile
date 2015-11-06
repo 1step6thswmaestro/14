@@ -2,11 +2,12 @@ CC = gcc
 
 SRCS_MKFS = ../util.c ../volume.c mkfs.c
 SRCS_FUSE = ../util.c ../volume.c ../fat.c ../entry.c ../file.c ../dir.c fuse.c
-SRCS_MDBFS = ../util.c ../volume.c ../fat.c ../entry.c ../file.c ../dir.c mdbfs.c
+SRCS_MDBFS = ../util.c ../volume.c ../fat.c ../entry.c ../file.c ../dir.c mdbfs.c ../sqliteio.c
 
 CFLAGS_MKFS = -g -O1 -Wall -fno-strict-aliasing -std=gnu99 
 CFLAGS_FUSE = -Wall `pkg-config fuse --cflags --libs` -lpthread
-CFLAGS_MDBFS = -g -O1 -Wall -fno-strict-aliasing -std=gnu99 
+CFLAGS_MDBFS = -g -O1 -Wall -fno-strict-aliasing -std=gnu99
+CFLAGS_SQLITE = -lpthread -ldl
 
 TARGET_MKFS = mkfs.mfs
 TARGET_FUSE = mfs-fuse
@@ -24,5 +25,4 @@ mfs-fuse:
 	$(CC) $(SRCS_FUSE) $(CFLAGS_FUSE) -o $(TARGET_FUSE)
 
 mdbfs:
-	$(CC) $(CFLAGS_MDBFS) $(SRCS_MDBFS) -o $(TARGET_MDBFS)
-
+	$(CC) $(CFLAGS_MDBFS) $(SRCS_MDBFS) -o $(TARGET_MDBFS) $(CFLAGS_SQLITE)
