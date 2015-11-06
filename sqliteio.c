@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include "util.h"
 #include "dir.h"
-#include "volume.h"
 
-struct mfs_volume* open_sqlite_volume(char* device_name){
+struct mfs_volume* open_sqlite_volume(char* device_name)
+{
 	if (device_name == NULL) 
 	{
 		printf("ERROR: Set the correct device name\n");
