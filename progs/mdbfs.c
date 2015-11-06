@@ -237,48 +237,48 @@ static void create_volume(struct mfs_volume* new_volume, ps8_t volume_name, u128
 	make_fat(new_volume, sb, sb->fat_index_size);
 
 
-	__mfs_mkdir(new_volume, "", "test1");
-	__mfs_mkdir(new_volume, "", "test2");
-	__mfs_mkdir(new_volume, "", "test3");
-	__mfs_mkdir(new_volume, "", "test4");
+	// __mfs_mkdir(new_volume, "", "test1");
+	// __mfs_mkdir(new_volume, "", "test2");
+	// __mfs_mkdir(new_volume, "", "test3");
+	// __mfs_mkdir(new_volume, "", "test4");
 
 
 	// // Read Dump SQLite
-	FILE *fp;
-	u32_t total_size;
-	u32_t n_size;
+	// FILE *fp;
+	// u32_t total_size;
+	// u32_t n_size;
 
-	fp = fopen("./test.db", "r");
+	// fp = fopen("./test.db", "r");
 
-	fseek(fp, 0, SEEK_END);
-	total_size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	// fseek(fp, 0, SEEK_END);
+	// total_size = ftell(fp);
+	// fseek(fp, 0, SEEK_SET);
 
-	char* buff = (char *) malloc(total_size);
+	// char* buff = (char *) malloc(total_size);
 
-	while(1)
-	{
-		n_size = fread(buff, sizeof(u8_t), total_size, fp);
+	// while(1)
+	// {
+	// 	n_size = fread(buff, sizeof(u8_t), total_size, fp);
 
-		if(n_size <= 0){
-			break;
-		}
-	}
+	// 	if(n_size <= 0){
+	// 		break;
+	// 	}
+	// }
 
-	// File Content Write
-	write_sqlite_file(new_volume, "/", "test1.db", buff, 0, total_size);
-	write_sqlite_file(new_volume, "/", "test2.db", buff, 0, total_size);
-	write_sqlite_file(new_volume, "/", "test3.db", buff, 0, total_size);
-	write_sqlite_file(new_volume, "/", "test4.db", buff, 0, total_size);
-	write_sqlite_file(new_volume, "/", "test5.db", buff, 0, total_size);
+	// // File Content Write
+	// write_sqlite_file(new_volume, "/", "test1.db", buff, 0, total_size);
+	// write_sqlite_file(new_volume, "/", "test2.db", buff, 0, total_size);
+	// write_sqlite_file(new_volume, "/", "test3.db", buff, 0, total_size);
+	// write_sqlite_file(new_volume, "/", "test4.db", buff, 0, total_size);
+	// write_sqlite_file(new_volume, "/", "test5.db", buff, 0, total_size);
 
-	read_sqlite_file(new_volume, "/", "test1.db");
+	// read_sqlite_file(new_volume, "/", "test1.db");
 
-	// SQLite Dummy Buffer Free
-	free(buff);
-	fclose(fp);
+	// // SQLite Dummy Buffer Free
+	// free(buff);
+	// fclose(fp);
 
-	printf("\n\n\n");
+	// printf("\n\n\n");
 }
 
 int main(int argc, char **argv)

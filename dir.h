@@ -16,12 +16,12 @@ struct mfs_dirent {
 PACKED;
 
 enum mfs_dirent_attribute {
-	unused 					= 0x00,
-	deleted_file   	= 0x02,
-	normal_file    	= 0x03,
-	deleted_dir 		= 0x04,
-	normal_dir 			= 0x05,
-	long_file_name  = 0x06
+	// unused 					= 0x00,
+	deleted_file   	= 0x00,
+	normal_file    	= 0x01,
+	deleted_dir 		= 0x02,
+	normal_dir 			= 0x03,
+	long_file_name  = 0x04
 };
 
 #ifdef __KERNEL__
