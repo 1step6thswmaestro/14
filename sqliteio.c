@@ -42,42 +42,21 @@ void write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, 
 	alloc_new_entry(volume, root_cluster_number, file_name, &dentry);
 }
 
-int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff)
+int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, char* buff, u128 offset, int len)
 {
-	int n_read = 0;
-	u128 cluster_number;
-	struct mfs_dirent dentry;
-	int i;
-
-	int offset = 0;
-
-	cluster_number = get_cluster_number(volume, route);
-	get_dentry(volume, cluster_number, file_name, &dentry);
-
-	int len = dentry.size;
-
-	buff = malloc(len);
-	if (buff == NULL)
+	if(buff == NULL)
 	{
 		return -1;
 	}
 
-	while (offset < len)
-	{
-		n_read = read_file(volume, &dentry , &buff[offset], len, offset);
-		offset += n_read;
-	}
+	int n_read = 0;
 
-	for (i = 0; i < len; ++i)
-	{
-		printf("%02X ", buff[i] & 0xff);
-		if ((i+1)%32 == 0)
-		{
-			printf("\n");
-		}
-	}
+	u128 cluster_number = get_cluster_number(volume, route);
+	struct mfs_dirent dentry;
 
-	free(buff);
+	get_dentry(volume, cluster_number, file_name, &dentry);
 
-	return len;
+	n_read = read_file(volume, &dentry, buff, len, offset);
+
+	return n_read;
 }
