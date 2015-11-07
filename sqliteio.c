@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "util.h"
 #include "dir.h"
+#include "namei.h"
 
 struct mfs_volume* open_sqlite_volume(char* device_name)
 {
@@ -25,8 +26,36 @@ struct mfs_volume* open_sqlite_volume(char* device_name)
 	return volume;
 }
 
+void open_sqlite_file(struct mfs_volume* volume, char* route, char* file_name)
+{
+	printf("mfs sqlite: open\n");
+
+	int dentry_type = lookup_sqlite_file(volume, route, file_name);
+
+	switch(dentry_type)
+	{
+		case FILE_DENTRY:
+			printf("found file: %s\n", file_name);
+			break;
+		case DIR_DENTRY:
+			printf("found dir: %s\n", file_name);
+			break;
+		default:
+			printf("not found: %s\n", file_name);
+			create_sqlite_file(volume, route, file_name);
+			break;
+	}
+}
+
+int lookup_sqlite_file(struct mfs_volume* volume, char* route, char* file_name)
+{
+	printf("mfs sqlite: lookup\n");
+	return __mfs_lookup(volume, route, file_name);
+}
+
 void create_sqlite_file(struct mfs_volume* volume, char* route, char* file_name)
 {
+	printf("mfs sqlite: create\n");
 	__mfs_create(volume, route, file_name);
 }
 
@@ -36,6 +65,7 @@ int write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, c
 	{
 		return -1;
 	}
+	printf("mfs sqlite: write %dB in %s%s:%d\n", len, route, file_name, offset);
 
 	int n_write = 0;
 
@@ -57,6 +87,7 @@ int read_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, ch
 	{
 		return -1;
 	}
+	printf("mfs sqlite: read %dB in %s%s:%d\n", len, route, file_name, offset);
 
 	int n_read = 0;
 
