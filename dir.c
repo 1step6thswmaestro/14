@@ -341,27 +341,19 @@ void __mfs_readdir(struct mfs_volume* volume, const ps16_t route, struct printdi
 
 static int mfs_readdir(struct file *file, struct dir_context *ctx)
 {
-	printk("\t\t\t\t\t\t\t\t\t\tMFS READDIR\n");
-
 	char buf[512] = {0};
 	struct dentry *de = file->f_dentry;
 
 	get_file_path_from_dentry(de, buf, 512);
-	printk("\t\t\t\t\t\t\t\t\t\tMFS READDIR: %s\n", buf);
 
 	if(ctx->pos > 0) {
-		printk("\t\t\t\t\t\t\t\t\t\tMFS READDIR: OUT 1 %d\n", ctx->pos);
 		return 1;
 	}
 
 	if(!dir_emit_dots(file, ctx)) {
-		printk("\t\t\t\t\t\t\t\t\t\tMFS READDIR: OUT 0\n");
 		return 0;
 	}
 	
-	printk("\t\t\t\t\t\t\t\t\t\tMFS READDIR: RUN READ\n");
-
-
 	__mfs_readdir(buf, file, ctx);
 
 	return 1;
@@ -381,8 +373,6 @@ static int mfs_readdir(struct file *file, struct dir_context *ctx)
 */
 static int mfs_readdir(struct file *filp, void* dirent, filldir_t filldir)
 {
-	printk("\t\t\t\t\t\t\t\t\t\tMFS READDIR\n");
-
 	char buf[512]={0};
 	struct dentry *de = filp->f_dentry;
 	//struct dentry *new_dentry;

@@ -69,14 +69,14 @@ int write_sqlite_file(struct mfs_volume* volume, char* route, char* file_name, c
 
 	int n_write = 0;
 
-	u128 root_cluster_number = get_cluster_number(volume, route);
+	u128 cluster_number = get_cluster_number(volume, route);
 	struct mfs_dirent dentry;
 
-	get_dentry(volume, root_cluster_number, file_name, &dentry);
+	get_dentry(volume, cluster_number, file_name, &dentry);
 
 	n_write = write_file(volume, &dentry, buff, len, offset);
 
-	alloc_new_entry(volume, root_cluster_number, file_name, &dentry);
+	alloc_new_entry(volume, cluster_number, file_name, &dentry);
 
 	return n_write;
 }
