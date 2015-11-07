@@ -7858,6 +7858,8 @@ struct sqlite3_rtree_query_info {
 
 #endif  /* ifndef _SQLITE3RTREE_H_ */
 
+void setvolume(struct mfs_volume* vol);
+
 int get_filename_size(char* path)
 {
 	int len = 0, pos = 0;

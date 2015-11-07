@@ -4469,6 +4469,8 @@ int SQLITE_CDECL main(int argc, char **argv){
   int nCmd = 0;
   char **azCmd = 0;
 
+  setvolume(open_sqlite_volume("disk.img"));
+
 #if USE_SYSTEM_SQLITE+0!=1
   if( strcmp(sqlite3_sourceid(),SQLITE_SOURCE_ID)!=0 ){
     fprintf(stderr, "SQLite header and source version mismatch\n%s\n%s\n",
