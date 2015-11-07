@@ -7858,3 +7858,31 @@ struct sqlite3_rtree_query_info {
 
 #endif  /* ifndef _SQLITE3RTREE_H_ */
 
+int get_filename_size(char* path)
+{
+	int len = 0, pos = 0;
+	while(*path != '\0') {
+		if(*path == '/') {
+			pos = len;
+		}
+		len++;
+		path++;
+	}
+	return len-pos;
+}
+
+char* get_filename(char* path)
+{
+	int len = 0, pos = 0, i;
+	printf("get filename : %s\n", path);
+	for (i=strlen(path)-1; i>=0; i--)
+	{
+		if(path[i] == '/') break;
+	}
+	printf("found token %d", i);
+//	char* out = malloc(len - pos);
+//	strcpy(out, &(path[pos+1]));
+
+
+	return &(path[i+1]);
+}
