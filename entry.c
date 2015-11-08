@@ -12,7 +12,7 @@ BOOL get_dir_path(ps16_t file_path, ps16_t dir_path)
 {
 	ps16_t last_seperator = strrchr(file_path, L'/');
 
-	printk("get_dir_path last_seperator : %s\n", last_seperator);
+	printf("get_dir_path last_seperator : %s\n", last_seperator);
 
 	if(last_seperator == NULL)
 			return FALSE;
@@ -25,7 +25,7 @@ BOOL get_file_name(ps16_t file_path, ps16_t file_name)
 {
 	ps16_t last_seperator = strrchr(file_path, L'/');
 
-	printk("get_file_name last_seperator : %s\n", last_seperator);
+	printf("get_file_name last_seperator : %s\n", last_seperator);
 
 	if(last_seperator == NULL)
 			return FALSE;
@@ -59,12 +59,13 @@ BOOL get_dentry(struct mfs_volume* volume, u128 dir_cluster_number,
 	struct mfs_dirent* current_dir_entry = NULL;
 	u128 end_cluster = get_end_cluster(volume);
 
-
 	printf("get_dentry: %s\n", file_name);
 
 	// 디렉토리의 모든 클러스터를 검사한다. 
 	while(current_cluster_number != end_cluster)
 	{
+		printf("current_cluster_number: %d\n", current_cluster_number);
+
 		read_position = read_cluster(volume, current_cluster_number);
 
 #ifdef __KERNEL__
@@ -78,7 +79,7 @@ BOOL get_dentry(struct mfs_volume* volume, u128 dir_cluster_number,
 
 		while(current_entry_number != entry_per_data_cluster)
 		{
-			printk("current entry number after : %d\n", current_entry_number);
+			printf("current entry number after : %d\n", current_entry_number);
 
 			if(is_normal_file(current_dir_entry->attribute) == TRUE)
 			{
@@ -108,7 +109,7 @@ BOOL get_dentry(struct mfs_volume* volume, u128 dir_cluster_number,
 		}
 
 		current_cluster_number = read_fat_index(volume, current_cluster_number);
-		printk("read fat index : %d\n", current_cluster_number);
+		printf("read fat index : %d\n", current_cluster_number);
 	}
 
 	printf("file not exist\n");
@@ -272,7 +273,7 @@ BOOL alloc_new_dirent(struct mfs_volume* volume, u128 dir_cluster_number, struct
 
 				write_volume(volume, dirent, sizeof(struct mfs_dirent), 1);
 
-				printk("alloc_new_dirent %d %d\n", current_cluster_number, wirte_position);
+				printf("alloc_new_dirent %d %d\n", current_cluster_number, wirte_position);
 
 				return TRUE;
 			}
@@ -300,7 +301,7 @@ BOOL alloc_new_dirent(struct mfs_volume* volume, u128 dir_cluster_number, struct
 #endif
 	write_volume(volume, dirent, sizeof(struct mfs_dirent), 1);
 
-	printk("alloc_new_dirent %d %d\n", current_cluster_number, wirte_position);
+	printf("alloc_new_dirent %d %d\n", current_cluster_number, wirte_position);
 
 	return TRUE;
 }
@@ -424,7 +425,7 @@ BOOL alloc_new_entry(struct mfs_volume* volume, u128 dir_cluster_number,
 		read_volume(volume, cluster, sizeof(u8_t), CLUSTER_SIZE);
 
 		current_dentry = get_first_entry(cluster, &current_entry_number, has_long_file_name_next_entry);
-		printk("alloc_new_entry current_cluster_number: %d\n", current_cluster_number);
+		printf("alloc_new_entry current_cluster_number: %d\n", current_cluster_number);
 
 		while(current_entry_number != entry_per_data_cluster)
 		{
@@ -454,7 +455,7 @@ BOOL alloc_new_entry(struct mfs_volume* volume, u128 dir_cluster_number,
 					seek_volume(volume, read_position, SEEK_SET);
 #endif
 					write_volume(volume, cluster, sizeof(u8_t), CLUSTER_SIZE);
-					printk("mfs inner dentry update\n");
+					printf("mfs inner dentry update\n");
 
 					return TRUE;
 				}
