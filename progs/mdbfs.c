@@ -292,18 +292,17 @@ void create_dummy(struct mfs_volume* volume, char* route, char* file_name, char*
 	}
 }
 
-int main(int argc, char **argv)
+int mfs_format(int argc, char **argv)
 {
 	ps8_t volume_name = NULL;
 	u128 volume_size = 0;
 	u128 cluster_size = 0;
 	struct mfs_volume* volume = NULL;
 	static int auto_create_loopback_flag = 0;
-
-  while(1) 
+  while(1)
 	{
 		int c;
-		static const struct option long_options[] = 
+		static const struct option long_options[] =
 		{
 		  { "auto", 				no_argument, 				&auto_create_loopback_flag, 	1		},
 			{ "name", 				required_argument, 	NULL, 												'n' },
@@ -316,67 +315,64 @@ int main(int argc, char **argv)
 		if (c < 0)
 			break;
 
-		switch(c) 
+		switch(c)
 		{
 			case 0:
 				break;
 			case 'n':
 				volume_name = strdup(optarg);
+				printf("volume_name : \n");
 				break;
 			case 's':
 				volume_size = parse_size(optarg);
+				printf("volume_size : \n");
 				break;
 			case 'c':
 				cluster_size = parse_size(optarg);
+				printf("cluster size\n");
 				break;
 			case GETOPT_VAL_HELP:
 			default:
 				print_usage(c != GETOPT_VAL_HELP);
 		}
 	}
-
-  if (auto_create_loopback_flag) 
+  if (auto_create_loopback_flag)
 	{
-  	if (volume_name == NULL) 
+  	if (volume_name == NULL)
 		{
 			printf("ERROR: Set the volume name\n");
-			exit(1);
+			return 0;
 		}
-
-		if (volume_size <= 0) 
+		if (volume_size <= 0)
 		{
 			printf("ERROR: Set the correct volume size\n");
-			exit(1);
+			return 0;
 		}
 
 		volume = create_loopback(volume_name);
 
-	} 
-	else 
+	}
+	else
 	{
-		char* device_name = argv[optind];
-
-		if (device_name == NULL) 
+		char* device_name = argv[0];
+		if (device_name == NULL)
 		{
 			printf("ERROR: Set the correct device name\n");
-			exit(1);
+			return 0;
 		}
-
 		volume = open_device(device_name, &volume_size);
 	}
-
-  if (cluster_size <= 0) 
+  if (cluster_size <= 0)
 	{
 		printf("ERROR: Set the correct cluster size\n");
-		exit(1);
+		return 0;
 	}
-
 	create_volume(volume, volume_name, volume_size, cluster_size);
-	if (volume != NULL) 
+	if (volume != NULL)
 	{
 		print_volume_status(volume);
 		free_volume(volume);
 	}
 
-	return 0;
+	return 1;
 }
