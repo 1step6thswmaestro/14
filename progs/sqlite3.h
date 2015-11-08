@@ -7859,3 +7859,54 @@ struct sqlite3_rtree_query_info {
 #endif  /* ifndef _SQLITE3RTREE_H_ */
 
 void setvolume(struct mfs_volume* vol);
+
+char **strsplit(const char* str, const char* delim, size_t* numtokens) {
+  char *s = strdup(str);
+  size_t tokens_alloc = 1;
+  size_t tokens_used = 0;
+  char **tokens = calloc(tokens_alloc, sizeof(char*));
+
+  char *token, *strtok_ctx;
+  for (token = strtok_r(s, delim, &strtok_ctx);token != NULL;token = strtok_r(NULL, delim, &strtok_ctx)) {
+	if (tokens_used == tokens_alloc) {
+	  tokens_alloc *= 2;
+      tokens = realloc(tokens, tokens_alloc * sizeof(char*));
+    }
+	tokens[tokens_used++] = strdup(token);
+  }
+  if (tokens_used == 0) {
+    free(tokens);
+    tokens = NULL;
+  } else {
+	tokens = realloc(tokens, tokens_used * sizeof(char*));
+  }
+  *numtokens = tokens_used;
+  free(s);
+
+  return tokens;
+}
+
+char *get_filename(const char* str, const char* delim) {
+  char *s = strdup(str);
+  size_t tokens_alloc = 1;
+  size_t tokens_used = 0;
+  char **tokens = calloc(tokens_alloc, sizeof(char*));
+
+  char *token, *strtok_ctx;
+  for (token = strtok_r(s, delim, &strtok_ctx);token != NULL;token = strtok_r(NULL, delim, &strtok_ctx)) {
+	if (tokens_used == tokens_alloc) {
+	  tokens_alloc *= 2;
+      tokens = realloc(tokens, tokens_alloc * sizeof(char*));
+    }
+	tokens[tokens_used++] = strdup(token);
+  }
+  if (tokens_used == 0) {
+    free(tokens);
+    tokens = NULL;
+  } else {
+	tokens = realloc(tokens, tokens_used * sizeof(char*));
+  }
+  free(s);
+
+  return tokens[tokens_used-1];
+}
