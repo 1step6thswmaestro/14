@@ -52,6 +52,7 @@
 #endif
 #include <ctype.h>
 #include <stdarg.h>
+#include "mdbfs.h"
 
 #if !defined(_WIN32) && !defined(WIN32)
 # include <signal.h>
@@ -155,7 +156,6 @@ static void setTextMode(FILE *out){
 # define setBinaryMode(X)
 # define setTextMode(X)
 #endif
-
 
 /* True if the timer is enabled */
 static int enableTimer = 0;
@@ -2882,6 +2882,20 @@ static int do_meta_command(char *zLine, ShellState *p){
     }
   }else
 
+  if( c=='f' && n>=3 && strncmp(azArg[0], "format", n)==0 ){
+	char *line = NULL, **tokens;
+	size_t linelen, numtokens;
+	while(1) {
+      printf("device_name, volume_name, size, cluster_size : ");
+      getline(&line, &linelen, stdin);
+      tokens = strsplit(line, ", \t\n", &numtokens);
+      if (mfs_format((int)numtokens, tokens)) break;
+	}
+    for (size_t i = 0; i < numtokens; i++) free(tokens[i]);
+    if (tokens != NULL) free(tokens);
+    if (line != NULL) free(line);
+  }else
+
   if( c=='f' && strncmp(azArg[0], "fullschema", n)==0 ){
     ShellState data;
     char *zErrMsg = 0;
@@ -4815,3 +4829,4 @@ int SQLITE_CDECL main(int argc, char **argv){
   sqlite3_free(data.zFreeOnClose); 
   return rc;
 }
+
