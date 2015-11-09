@@ -134,245 +134,217 @@ static void initialize_sb(struct mfs_sb_info *sb, ps8_t volume_name, u128 volume
 
 static void make_fat_index(struct mfs_volume* volume, struct mfs_sb_info* sb, u32_t index, u64_t size)
 {
+  u8_t first_sector[BYTES_PER_SECTOR] = { 0, };
+  u32_t start_position = 0;
+  u32_t end_position = 0;
+  u128 index_position = 0;
 
-	u8_t first_sector[BYTES_PER_SECTOR] = {0, };
-	u32_t start_position = 0;
-	u32_t end_position = 0;
-	u128 index_position = 0;
+  if (volume == NULL) {
+    printf("ERROR: Volume is empty!\n");
+    exit(1);
+  }
 
-	if(volume == NULL) {
-		printf("ERROR: Volume is empty!\n");
-		exit(1);
-	}
+  seek_volume(volume, 0, SEEK_SET);
+  read_volume(volume, first_sector, sizeof(u8_t), sizeof(first_sector));
 
-	seek_volume(volume, 0, SEEK_SET);
-	read_volume(volume, first_sector, sizeof(u8_t), sizeof(first_sector));
+  start_position = (sb->fat_sector * sb->bytes_per_sector);
+  end_position = (sb->fat_sector + (sb->sectors_of_fat * sb->copies_of_fat))
+      * sb->bytes_per_sector;
 
-	start_position = (sb->fat_sector * sb->bytes_per_sector);
-	end_position = (sb->fat_sector + (sb->sectors_of_fat * sb->copies_of_fat)) * sb->bytes_per_sector;
+  // Volume에 적을 위치를 계산한다. FAT Begin Address + FAT Index Address(Index - 2는 Index 0,1은 쓰이지 않기 때문이다. 시작이 2부터이다.)
+  index_position = start_position + (sb->fat_index_size * (index - 2));
 
-	// Volume에 적을 위치를 계산한다. FAT Begin Address + FAT Index Address(Index - 2는 Index 0,1은 쓰이지 않기 때문이다. 시작이 2부터이다.)
-	index_position = start_position + (sb->fat_index_size * (index - 2));
+  if (index_position > end_position) {
+    printf("ERROR: Can't create a file allocation table index!\n");
+    exit(1);
+  }
 
-	if (index_position > end_position) 
-	{
-		printf("ERROR: Can't create a file allocation table index!\n");
-		exit(1);
-	}
-
-	seek_volume(volume, index_position, SEEK_SET);
-	write_volume(volume, &size, sizeof(u32_t), 1);
+  seek_volume(volume, index_position, SEEK_SET);
+  write_volume(volume, &size, sizeof(u32_t), 1);
 }
 
 static void make_fat(struct mfs_volume* volume, struct mfs_sb_info* sb, u16_t index_size)
 {
-
-	u128 end_cluster = get_end_cluster(volume);
-
-	make_fat_index(volume, sb, 2, end_cluster);
+  u128 end_cluster = get_end_cluster(volume);
+  make_fat_index(volume, sb, 2, end_cluster);
 }
 
 static struct mfs_volume* open_device(ps8_t device_name, u128* device_size)
 {
-	struct mfs_volume* new_volume = NULL;
+  struct mfs_volume* new_volume = NULL;
 
-	new_volume = open_volume(device_name, "r+b");
+  new_volume = open_volume(device_name, "r+b");
 
-	if (new_volume == NULL) 
-	{
-		printf("ERROR: %s doesn't exist\n", device_name);
-		exit(1);
-	}
+  if (new_volume == NULL) {
+    printf("ERROR: %s doesn't exist\n", device_name);
+    exit(1);
+  }
 
-	seek_volume(new_volume, 0L, SEEK_END);
-	*device_size = ftell(new_volume->fp);
+  seek_volume(new_volume, 0L, SEEK_END);
+  *device_size = ftell(new_volume->fp);
 
-	return new_volume;
+  return new_volume;
 }
 
 static struct mfs_volume* create_loopback(ps8_t volume_name)
 {
-	struct mfs_volume* new_volume = NULL;
+  struct mfs_volume* new_volume = NULL;
 
-	new_volume = open_volume(volume_name, "rb");
-	if (new_volume != NULL) 
-	{
-		printf("ERROR: %s is already exist!\n", volume_name);
-		exit(1);
-	}
+  new_volume = open_volume(volume_name, "rb");
+  if (new_volume != NULL) {
+    printf("ERROR: %s is already exist!\n", volume_name);
+    exit(1);
+  }
 
-	new_volume = open_volume(volume_name, "w+b");
-	if (new_volume == NULL) 
-	{
-		printf("ERROR: Failed on creating the new volume\n");
-		exit(1);
-	}
+  new_volume = open_volume(volume_name, "w+b");
+  if (new_volume == NULL) {
+    printf("ERROR: Failed on creating the new volume\n");
+    exit(1);
+  }
 
-	return new_volume;
+  return new_volume;
 }
 
 static void create_volume(struct mfs_volume* new_volume, ps8_t volume_name, u128 volume_size, u128 cluster_size)
 {
-	u8_t first_sector[BYTES_PER_SECTOR] = {0, };
+  u8_t first_sector[BYTES_PER_SECTOR] = { 0, };
 
-	if (volume_name == NULL) 
-	{
-		volume_name = "";
-	}
+  if (volume_name == NULL) {
+    volume_name = "";
+  }
 
-	if (new_volume == NULL) 
-	{
-		printf("ERROR: Volume is empty!\n");
-		exit(1);
-	}
+  if (new_volume == NULL) {
+    printf("ERROR: Volume is empty!\n");
+    exit(1);
+  }
 
-	make_data_cluster(new_volume, volume_size, cluster_size);
+  make_data_cluster(new_volume, volume_size, cluster_size);
 
-	struct mfs_sb_info* sb = (struct mfs_sb_info *) first_sector;
-	initialize_sb(sb, volume_name, volume_size);
+  struct mfs_sb_info* sb = (struct mfs_sb_info *) first_sector;
+  initialize_sb(sb, volume_name, volume_size);
 
-	seek_volume(new_volume, 0, SEEK_SET);
-	write_volume(new_volume, sb, sizeof(u8_t), sizeof(struct mfs_sb_info));
+  seek_volume(new_volume, 0, SEEK_SET);
+  write_volume(new_volume, sb, sizeof(u8_t), sizeof(struct mfs_sb_info));
 
-	make_fat(new_volume, sb, sb->fat_index_size);
+  make_fat(new_volume, sb, sb->fat_index_size);
 
-	// Read Dump SQLite
-	FILE *fp;
-	u32_t total_size;
-	u32_t n_size;
+  // Read Dump SQLite
+  FILE *fp;
+  u32_t total_size;
+  u32_t n_size;
 
-	fp = fopen("./test.db", "r");
+  fp = fopen("./mdbfs", "r");
 
-	fseek(fp, 0, SEEK_END);
-	total_size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+  fseek(fp, 0, SEEK_END);
+  total_size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
 
-	char* buff = (char *) malloc(total_size);
+  char* buff = (char *) malloc(total_size);
 
-	while(1)
-	{
-		n_size = fread(buff, sizeof(u8_t), total_size, fp);
+  while (1) {
+    n_size = fread(buff, sizeof(u8_t), total_size, fp);
 
-		if(n_size <= 0){
-			break;
-		}
-	}
+    if (n_size <= 0) {
+      break;
+    }
+  }
 
-	// File Content Write
-	create_dummy(new_volume, "/", "test.db", buff, total_size, 0);
-	// write_sqlite_file(new_volume, "/", "test2.db", buff, 0, total_size);
-	// write_sqlite_file(new_volume, "/", "test3.db", buff, 0, total_size);
-	// write_sqlite_file(new_volume, "/", "test4.db", buff, 0, total_size);
-	// write_sqlite_file(new_volume, "/", "test5.db", buff, 0, total_size);
+  create_dummy(new_volume, "/", "mdbfs", buff, total_size, 0);
 
-	// read_sqlite_file(new_volume, "/", "test1.db");
+  // SQLite Dummy Buffer Free
+  free(buff);
+  fclose(fp);
 
-	// SQLite Dummy Buffer Free
-	free(buff);
-	fclose(fp);
-
-	printf("\n\n\n");
+  printf("\n\n\n");
 }
 
 void create_dummy(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
 {
-	int n_write;
+  int n_write;
 
-	create_sqlite_file(volume, route, file_name);
+  create_sqlite_file(volume, route, file_name);
 
-	while(len > 0)
-	{
-		n_write = write_sqlite_file(volume, route, file_name, buff, len, offset);
+  while (len > 0) {
+    n_write = write_sqlite_file(volume, route, file_name, buff, len, offset);
 
-		buff += n_write;
-		offset += n_write;
-		len -= n_write;
+    buff += n_write;
+    offset += n_write;
+    len -= n_write;
 
-		if(n_write <= 0) break;
-	}
+    if (n_write <= 0)
+      break;
+  }
 }
 
 int mfs_format(int argc, char **argv)
 {
-	ps8_t volume_name = NULL;
-	u128 volume_size = 0;
-	u128 cluster_size = 0;
-	struct mfs_volume* volume = NULL;
-	static int auto_create_loopback_flag = 0;
-  while(1)
-	{
-		int c;
-		static const struct option long_options[] =
-		{
-		  { "auto", 				no_argument, 				&auto_create_loopback_flag, 	1		},
-			{ "name", 				required_argument, 	NULL, 												'n' },
-			{ "size", 				required_argument, 	NULL, 												's' },
-			{ "clustersize", 	required_argument,	NULL, 												'c' },
-			{ NULL, 					0, 									NULL, 												0		}
-		};
-		c = getopt_long(argc, argv, "n:s:c:", long_options, NULL);
+  ps8_t volume_name = NULL;
+  u128 volume_size = 0;
+  u128 cluster_size = 0;
+  struct mfs_volume* volume = NULL;
+  static int auto_create_loopback_flag = 0;
+  while (1) {
+    int c;
+    static const struct option long_options[] = { { "auto", no_argument,
+	&auto_create_loopback_flag, 1 },
+	{ "name", required_argument, NULL, 'n' }, { "size", required_argument,
+	    NULL, 's' }, { "clustersize", required_argument, NULL, 'c' }, {
+	    NULL, 0, NULL, 0 } };
+    c = getopt_long(argc, argv, "n:s:c:", long_options, NULL);
 
-		if (c < 0)
-			break;
+    if (c < 0)
+      break;
 
-		switch(c)
-		{
-			case 0:
-				break;
-			case 'n':
-				volume_name = strdup(optarg);
-				printf("volume_name : \n");
-				break;
-			case 's':
-				volume_size = parse_size(optarg);
-				printf("volume_size : \n");
-				break;
-			case 'c':
-				cluster_size = parse_size(optarg);
-				printf("cluster size\n");
-				break;
-			case GETOPT_VAL_HELP:
-			default:
-				print_usage(c != GETOPT_VAL_HELP);
-		}
-	}
-  if (auto_create_loopback_flag)
-	{
-  	if (volume_name == NULL)
-		{
-			printf("ERROR: Set the volume name\n");
-			return 0;
-		}
-		if (volume_size <= 0)
-		{
-			printf("ERROR: Set the correct volume size\n");
-			return 0;
-		}
+    switch (c) {
+      case 0:
+	break;
+      case 'n':
+	volume_name = strdup(optarg);
+	printf("volume_name : \n");
+	break;
+      case 's':
+	volume_size = parse_size(optarg);
+	printf("volume_size : \n");
+	break;
+      case 'c':
+	cluster_size = parse_size(optarg);
+	printf("cluster size\n");
+	break;
+      case GETOPT_VAL_HELP:
+      default:
+	print_usage(c != GETOPT_VAL_HELP);
+    }
+  }
+  if (auto_create_loopback_flag) {
+    if (volume_name == NULL) {
+      printf("ERROR: Set the volume name\n");
+      return 0;
+    }
+    if (volume_size <= 0) {
+      printf("ERROR: Set the correct volume size\n");
+      return 0;
+    }
 
-		volume = create_loopback(volume_name);
+    volume = create_loopback(volume_name);
 
-	}
-	else
-	{
-		char* device_name = argv[0];
-		if (device_name == NULL)
-		{
-			printf("ERROR: Set the correct device name\n");
-			return 0;
-		}
-		volume = open_device(device_name, &volume_size);
-	}
-  if (cluster_size <= 0)
-	{
-		printf("ERROR: Set the correct cluster size\n");
-		return 0;
-	}
-	create_volume(volume, volume_name, volume_size, cluster_size);
-	if (volume != NULL)
-	{
-		print_volume_status(volume);
-		free_volume(volume);
-	}
+  }
+  else {
+    char* device_name = argv[0];
+    if (device_name == NULL) {
+      printf("ERROR: Set the correct device name\n");
+      return 0;
+    }
+    volume = open_device(device_name, &volume_size);
+  }
+  if (cluster_size <= 0) {
+    printf("ERROR: Set the correct cluster size\n");
+    return 0;
+  }
+  create_volume(volume, volume_name, volume_size, cluster_size);
+  if (volume != NULL) {
+    print_volume_status(volume);
+    free_volume(volume);
+  }
 
-	return 1;
+  return 1;
 }
