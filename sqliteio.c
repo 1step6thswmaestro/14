@@ -30,17 +30,8 @@ int mdbfsOpen(struct mfs_volume* volume, char *filename) {
     case FILE_DENTRY:
       printf("found file: %s\n", filename);
       int n_read = 0;
-
-      u128 cluster_number = get_cluster_number(volume, "/");
       struct mfs_dirent dentry;
-      get_dentry(volume, cluster_number, filename, &dentry);
-      cn = (int) cluster_number;
-//      char path[500] = "/";
-//      strcat(path, filename);
-//      cn = (int) get_cluster_number(volume, path);
-//      struct mfs_dirent dentry;
-//      get_dentry(volume, cn, filename, &dentry);
-      print_dentry(&dentry);
+      get_dentry(volume, get_cluster_number(volume, "/"), filename, &dentry);
       cn = (int) dentry.head_cluster_number;
       break;
     case DIR_DENTRY:
