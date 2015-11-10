@@ -1,5 +1,9 @@
 #include "util.h"
 
+struct mfs_volume* mdbfsVolume(char* name);
+int mdbfsOpen(struct mfs_volume* volume, char *name);
+int mdbfsRead(u128 cluster, char* filename, char* buff, int len, u64_t offset);
+
 struct mfs_volume* open_sqlite_volume(char*);
 
 void open_sqlite_file  (struct mfs_volume*, char*, char*);
