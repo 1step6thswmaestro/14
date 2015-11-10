@@ -228,34 +228,34 @@ static void create_volume(struct mfs_volume* new_volume, ps8_t volume_name, u128
 
   make_fat(new_volume, sb, sb->fat_index_size);
 
-  // Read Dump SQLite
-  FILE *fp;
-  u32_t total_size;
-  u32_t n_size;
-
-  fp = fopen("./mdbfs", "r");
-
-  fseek(fp, 0, SEEK_END);
-  total_size = ftell(fp);
-  fseek(fp, 0, SEEK_SET);
-
-  char* buff = (char *) malloc(total_size);
-
-  while (1) {
-    n_size = fread(buff, sizeof(u8_t), total_size, fp);
-
-    if (n_size <= 0) {
-      break;
-    }
-  }
-
-  create_dummy(new_volume, "/", "mdbfs", buff, total_size, 0);
-
-  // SQLite Dummy Buffer Free
-  free(buff);
-  fclose(fp);
-
-  printf("\n\n\n");
+//  // Read Dump SQLite
+//  FILE *fp;
+//  u32_t total_size;
+//  u32_t n_size;
+//
+//  fp = fopen("./mdbfs", "r");
+//
+//  fseek(fp, 0, SEEK_END);
+//  total_size = ftell(fp);
+//  fseek(fp, 0, SEEK_SET);
+//
+//  char* buff = (char *) malloc(total_size);
+//
+//  while (1) {
+//    n_size = fread(buff, sizeof(u8_t), total_size, fp);
+//
+//    if (n_size <= 0) {
+//      break;
+//    }
+//  }
+//
+//  create_dummy(new_volume, "/", "mdbfs", buff, total_size, 0);
+//
+//  // SQLite Dummy Buffer Free
+//  free(buff);
+//  fclose(fp);
+//
+//  printf("\n\n\n");
 }
 
 void create_dummy(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
