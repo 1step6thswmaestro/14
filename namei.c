@@ -178,6 +178,20 @@ static int mfs_mkdir(struct inode * dir, struct dentry * dentry, int mode)
 }
 
 
+void mfs_print_inode(struct inode *inode) {
+  printk("print inode info\n");
+  if (inode) {
+    printk("mode : %d, ", inode->i_mode);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
+    printk("uid : %d, gid : %d\n", inode->i_uid.val, inode->i_gid.val);
+#else
+    printk("uid : %d, gid : %d\n", inode->i_uid, inode->i_gid);
+#endif
+  }
+}
+
+
 /**
 	@brief	새로운 파일 생성
 
@@ -201,7 +215,6 @@ static int mfs_create(struct inode *dir, struct dentry *dentry, int mode, struct
 	printk("\t\t\t\t\t\t\t\t\t\tMFS CREATE\n");
 	char path[512];
 	struct inode* inode = NULL;
-	printk("create \n");
 	get_dir_path_from_dentry(dentry, path, 512);
 
 	if (__mfs_create(dir->i_sb->s_fs_info, path, (ps16_t) dentry->d_name.name) == FALSE) {
@@ -219,6 +232,8 @@ static int mfs_create(struct inode *dir, struct dentry *dentry, int mode, struct
 		d_instantiate(dentry, inode);
 		#endif
 	}
+
+	mfs_print_inode(inode);
 
 	return 0;
 }
@@ -238,7 +253,7 @@ static int mfs_create(struct inode *dir, struct dentry *dentry, int mode, struct
 int mfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *kstat) {
 
 	printk("\t\t\t\t\t\t\t\t\t\tMFS GETATTR\n");
-	int ret;
+	int ret=0;
 	s16_t full_path[512] = {0,};
 	s16_t route[128] = {0, };
 	s16_t file_name[64] = {0, };
@@ -249,22 +264,28 @@ int mfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *kstat
 	get_file_path_from_dentry(dentry, full_path, 512);
 
 	printk("full_path: %s\n", full_path);
+	if(strlen(full_path)==0) {
+	  printk("mfs_getattr: path is too short\n");
+	  return ret;
+	}
 
 	get_file_name(full_path, file_name);
 	get_dir_path(full_path, route);
 
 	cluster_number = get_cluster_number(volume, route);
-	printk("cluster number : %d\n", cluster_number);
+	//printk("cluster number : %d\n", cluster_number);
 	get_dentry(volume, cluster_number, file_name, &dentry_mfs);
 
 	printk("mfs_getattr %s\n", dentry->d_name.name);
+	mfs_print_inode(dentry->d_inode);
 	ret = simple_getattr(mnt, dentry, kstat);
 
-	printk("getattr ret : %d\n", ret);
+	//printk("getattr ret : %d\n", ret);
 
 	kstat->size = dentry_mfs.size;
-	printk("mode - %d\n", kstat->mode);
+	//printk("mode - %d\n", kstat->mode);
 	kstat->mode|=0777;
+	printk("namei.c: mfs_getattr cluster %d = %d\n", dentry_mfs.head_cluster_number, ret);
 	return ret;
 }
 
