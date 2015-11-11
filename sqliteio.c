@@ -16,23 +16,30 @@ struct mfs_volume* mdbfsVolume(char* name) {
   struct mfs_volume* new = NULL;
   new = open_volume(name, "r+b");
   if (new == NULL) {
-    printf("open_mdbfs ERROR: %s doesn't exist\n", name);
+    printf("mdbfsVolume ERROR: %s doesn't exist\n", name);
     exit(1);
   }
-  printf("open_mdbfs SUC: %s is opened\n", name);
+  printf("mdbfsVolume SUC: %s is opened\n", name);
   return new;
+}
+
+char *mdbfsPath (char *filename) {
+  int len = strlen(filename);
+  char fullpath[] = "/";
+  strcat(fullpath, filename);
+  printf("fullpath : %s\n", fullpath);
+  return fullpath;
 }
 
 int mdbfsOpen(struct mfs_volume* volume, char *filename) {
   int cn = -1;
+  printf("[mdbfsOpen]\n");
 
   switch (mdbfsLookup(volume, filename)) {
     case FILE_DENTRY:
       printf("found file: %s\n", filename);
       int n_read = 0;
-      struct mfs_dirent dentry;
-      get_dentry(volume, get_cluster_number(volume, "/"), filename, &dentry);
-      cn = (int) dentry.head_cluster_number;
+      cn = (int) get_cluster_number(volume, mdbfsPath(filename));
       break;
     case DIR_DENTRY:
       printf("found dir: %s\n", filename);
@@ -48,10 +55,37 @@ int mdbfsOpen(struct mfs_volume* volume, char *filename) {
   return cn;
 }
 
-int mdbfsRead(u128 cluster, char* filename, char* buff, int len, u64_t offset) {
-//  got = read_sqlite_file(volume, "/", file_name, pBuf, cnt, offset);
+int mdbfsRead(struct mfs_volume* volume, int cn, char* filename, char* buff, int len, u64_t offset) {
+  printf("[mdbfsRead]: read %dB in %d\n", len, cn);
+  struct mfs_dirent dentry;
+  get_dentry(volume, cn, filename, &dentry);
+  return read_file(volume, &dentry, buff, len, offset);
+}
 
-//  return read_sqlite_file(volume, "/", name);
+int mdbfsWrite(struct mfs_volume* volume, char* filename, int cn, char* buff, int len, u64_t offset) {
+  if (buff == NULL) {
+    return -1;
+  }
+  printf("mfs sqlite: write %dB in %d\n", len, cn);
+
+  int n_write = 0;
+  u128 cluster_number = (u128) cn;
+  struct mfs_dirent dentry;
+
+  get_dentry(volume, cluster_number, filename, &dentry);
+  n_write = write_file(volume, &dentry, buff, len, offset);
+  alloc_new_entry(volume, cluster_number, filename, &dentry);
+  return n_write;
+}
+
+int mdbfsStat(struct mfs_volume* volume, char *filename, struct stat *stat) {
+  struct mfs_dirent dentry;
+  u128 cluster_number = get_cluster_number(volume, "/");
+  get_dentry(volume, cluster_number, filename, &dentry);
+
+//  struct inode *inode = dentry->d_inode;
+//  stat->st_mode =
+
   return 0;
 }
 
