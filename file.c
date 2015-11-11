@@ -7,6 +7,7 @@
 
 #include "fat.h"
 #include "entry.h"
+#include "namei.h"
 #include "file.h"
 
 #ifdef __KERNEL__
@@ -14,6 +15,29 @@
 #endif
 
 #ifdef __KERNEL__
+static loff_t mfs_lseek(struct file *filp, loff_t offset, int whence) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS LSEEK\n");
+
+  loff_t newpos;
+  switch(whence) {
+    case 0: /* SEEK_SET */
+      newpos = offset;
+      break;
+    case 1: /* SEEK_CUR */
+      newpos = filp->f_pos + offset;
+      break;
+    case 2: /* SEEK_END */
+      //newpos = dev->size + offset;
+      printf("SEEK_END err\n");
+      break;
+    default: /* can't happen */
+      return -EINVAL;
+  }
+  if (newpos < 0) return -EINVAL;
+  filp->f_pos = newpos;
+  return newpos;
+}
+
 /**
 	@brief	read operation
 
@@ -61,7 +85,8 @@ static ssize_t mfs_read(struct file* filp, char *buf, size_t len, loff_t *offset
 	copy_to_user(buf, kernel_buf, ret);
 	vfree(kernel_buf);
 
-	printk("read %d byte now offset is %d\n", ret, (int)*offset);
+	//printk("read %d byte now offset is %d\n", ret, (int)*offset);
+	printk("kernel buf : %s\n", kernel_buf);
 	return ret;
 }
 
@@ -110,11 +135,8 @@ static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t 
 
 	copy_from_user(kernel_buf, buf, len);
 
-	// while(*offset < len)
-	// {
-		ret = write_file(volume, &dentry, kernel_buf, len, *offset);
-		*offset +=ret;
-	// }
+	ret = write_file(volume, &dentry, kernel_buf, len, *offset);
+	*offset +=ret;
 
 	alloc_new_entry(volume, cluster_number, file_name, &dentry);
 	vfree(kernel_buf);
@@ -123,9 +145,37 @@ static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t 
 	return ret;
 }
 
+
+static int mfs_open(struct inode *inode, struct file *filp) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS OPEN\n");
+
+  s16_t full_path[512] = {0,};
+  s16_t route[128] = {0,};
+  s16_t file_name[64] = {0,};
+  void* volume = filp->f_path.dentry->d_sb->s_fs_info;
+
+  get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
+
+  get_dir_path(full_path, route);
+  get_file_name(full_path, file_name);
+
+  if (__mfs_lookup(volume, route, file_name) != FILE_DENTRY) return -1;
+  printf("found file: %s\n", file_name);
+  return 0;
+}
+
+
+static int mfs_release(struct inode *inode, struct file *filp) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS CLOSE\n");
+  return 0;
+}
+
 struct file_operations mfs_file_operations = {
+	.llseek		= mfs_lseek,
 	.read           = mfs_read,//<파일에 대하여 read연산을 수행 했을 때 호출될 함수
 	.write          = mfs_write,//<파일에 대하여 write연산을 수행 했을 때 호출될 함수
+	.open		= mfs_open,
+	.release	= mfs_release,
 };
 #endif
 
@@ -133,7 +183,7 @@ int read_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 	   	unsigned int len, unsigned int offset)
 {
 
-	printk("read_file enter\n");
+	//printk("read_file enter\n");
 
 	unsigned long file_size = dentry->size;
 	unsigned long pos = 0;
@@ -154,10 +204,9 @@ int read_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 
 	#endif
 
-	printk("file size : %d\n", file_size);
-	printk("current cluster before : %d\n", current_cluster);
-
-	printk("read_file : offset %d len %d filesize %d\n", offset, len, file_size);
+	//printk("file size : %d\n", file_size);
+	//printk("current cluster before : %d\n", current_cluster);
+	//printk("read_file : offset %d len %d filesize %d\n", offset, len, file_size);
 	if(offset > file_size){
 		return 0;
 	}
@@ -179,12 +228,13 @@ int read_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 		local_len = len;
 	}
 
-	printk("read_file : goto valid position:%d\n",(int)current_cluster);
-	printk("read_file : valid len%d\n",local_len);
+	printf("read_file - current_cluster %d\n", (int) current_cluster);
+	//printk("read_file : goto valid position:%d\n",(int)current_cluster);
+	//printk("read_file : valid len%d\n",local_len);
 	//read operation
 	current_read_pos = read_cluster(volume, current_cluster) + cluster_offset;
 
-	printk("read_file1: read pos:%u vlen %d llen%u  readb%u\n", offset, valid_len, local_len, read_byte);
+	//printk("read_file1: read pos:%u vlen %d llen%u  readb%u\n", offset, valid_len, local_len, read_byte);
 
 #ifdef __KERNEL__
 	seek_volume(volume, current_read_pos);
@@ -193,13 +243,14 @@ int read_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 #endif
 	read_volume(volume, buf, sizeof(u8_t), local_len);
 
+	printf("file.c: read_file buf = %s\n", buf);
 	return local_len;
 }
 
 int __mfs_create(struct mfs_volume* volume, ps16_t route, ps16_t file_name)
 {
 
-	printk("__mfs_create\n");
+	printk("__mfs_creat %s\n", file_name);
 
 	u32_t searched_cluster_number = 0;
 	u128 end_cluster = get_end_cluster(volume);
@@ -244,7 +295,7 @@ int write_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 
 	#endif
 
-	printk("write_file : offset %d len %d file_size %d\n", offset, len, file_size);
+	//printk("write_file : offset %d len %d file_size %d\n", offset, len, file_size);
 
 	//no data to write
 	if(len == 0){
@@ -292,14 +343,14 @@ int write_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 		pos = pos + CLUSTER_SIZE;
 	}
 
-	printk("write_file : goto valid position:%d\n",(int) current_cluster);
-	printk("write_file : valid len%d\n",valid_len);
+	printf("file.c: write_file in cluster %d\n",(int) current_cluster);
+	//printk("write_file : valid len%d\n",valid_len);
 	//write operation
 
 	current_write_pos = read_cluster(volume,current_cluster) + cluster_offset;
 
-	printk("write_file : valid len%d\n", valid_len);
-	printk("write_file1: write pos:%u vlen %d \n", offset, valid_len);
+	//printk("write_file : valid len%d\n", valid_len);
+	//printk("write_file1: write pos:%u vlen %d \n", offset, valid_len);
 
 #ifdef __KERNEL__
 	seek_volume(volume, current_write_pos);
