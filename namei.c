@@ -264,10 +264,19 @@ int mfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *kstat
 	get_file_path_from_dentry(dentry, full_path, 512);
 
 	printk("full_path: %s\n", full_path);
-	if(strlen(full_path)==0) {
-	  printk("mfs_getattr: path is too short\n");
-	  return ret;
-	}
+//	if(strlen(full_path)==0) {
+//	  printk("mfs_getattr: path is too short\n");
+//	  return ret;
+//	}
+//
+//	if(!get_file_name(full_path, file_name)) {
+//	  printk("mfs_getattr: filename is null\n");
+//	  return ret;
+//	}
+//	if(!get_dir_path(full_path, route)) {
+//	  printk("mfs_getattr: dir is null\n");
+//	  return ret;
+//	}
 
 	get_file_name(full_path, file_name);
 	get_dir_path(full_path, route);
@@ -291,19 +300,19 @@ int mfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *kstat
 
 
 struct inode_operations mfs_file_inode_ops = {
-	.getattr		= mfs_getattr,
+	.getattr	= mfs_getattr,
 };
 
 
 struct inode_operations mfs_dir_inode_ops = {
 	.create         = mfs_create,
 	.lookup         = mfs_lookup,
-	.link			= simple_link,
+	.link		= simple_link,
 	.unlink         = simple_unlink,
 	.mkdir          = mfs_mkdir,
 	.rmdir          = simple_rmdir,
 	.mknod          = mfs_mknod,
 	.rename         = simple_rename,
-	.getattr		= mfs_getattr,
+	.getattr	= mfs_getattr,
 };
 
