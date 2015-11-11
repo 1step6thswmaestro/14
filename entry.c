@@ -60,11 +60,15 @@ BOOL get_dentry(struct mfs_volume* volume, u128 dir_cluster_number,
 	u128 end_cluster = get_end_cluster(volume);
 
 	printf("get_dentry: %s\n", file_name);
+	if (strlen(file_name)==0) {
+	  printf("file name is too short\n");
+	  return FALSE;
+	}
 
 	// 디렉토리의 모든 클러스터를 검사한다. 
 	while(current_cluster_number != end_cluster)
 	{
-		printf("current_cluster_number: %d\n", current_cluster_number);
+		//printf("current_cluster_number: %d\n", current_cluster_number);
 
 		read_position = read_cluster(volume, current_cluster_number);
 
@@ -79,7 +83,7 @@ BOOL get_dentry(struct mfs_volume* volume, u128 dir_cluster_number,
 
 		while(current_entry_number != entry_per_data_cluster)
 		{
-			printf("current entry number after : %d\n", current_entry_number);
+			//printf("current entry number after : %d\n", current_entry_number);
 
 			if(is_normal_file(current_dir_entry->attribute) == TRUE)
 			{
@@ -109,7 +113,7 @@ BOOL get_dentry(struct mfs_volume* volume, u128 dir_cluster_number,
 		}
 
 		current_cluster_number = read_fat_index(volume, current_cluster_number);
-		printf("read fat index : %d\n", current_cluster_number);
+		//printf("read fat index : %d\n", current_cluster_number);
 	}
 
 	printf("file not exist\n");
