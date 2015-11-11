@@ -2,7 +2,8 @@
 
 struct mfs_volume* mdbfsVolume(char* name);
 int mdbfsOpen(struct mfs_volume* volume, char *name);
-int mdbfsRead(u128 cluster, char* filename, char* buff, int len, u64_t offset);
+int mdbfsRead(struct mfs_volume* volume, int cn, char* filename, char* buff, int len, u64_t offset);
+int mdbfsWrite(struct mfs_volume* volume, char* filename, int cn, char* buff, int len, u64_t offset);
 
 struct mfs_volume* open_sqlite_volume(char*);
 
