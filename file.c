@@ -14,6 +14,10 @@
 #define printf printk
 #endif
 
+//#ifdef __KERNEL__
+//static atomic_t available = ATOMIC_INIT(1);
+//#endif
+
 #ifdef __KERNEL__
 static loff_t mfs_lseek(struct file *filp, loff_t offset, int whence) {
   printk("\t\t\t\t\t\t\t\t\t\tMFS LSEEK\n");
@@ -141,7 +145,8 @@ static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t 
 	alloc_new_entry(volume, cluster_number, file_name, &dentry);
 	vfree(kernel_buf);
 
-	printk("write %d byte now offset is %d\n", ret, (int)*offset);
+	i_size_write(filp->f_path.dentry->d_inode, dentry.size);
+	printk("write %d byte now offset is %d(size %d)\n", ret, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
 	return ret;
 }
 
@@ -164,6 +169,34 @@ static int mfs_open(struct inode *inode, struct file *filp) {
   return 0;
 }
 
+static int mfs_fsync(struct file *filp, loff_t start, loff_t end, int datasync) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS FSYNC\n");
+
+  int ret = 0;
+//  struct file *host_file;
+//  struct inode *inode = file_inode(filp);
+//  //struct inode *coda_inode = file_inode(coda_file);
+//  struct coda_file_info *cfi;
+//
+//  if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) || S_ISLNK(inode->i_mode)))
+//    return -EINVAL;
+//
+//  ret = filemap_write_and_wait_range(inode->i_mapping, start, end);
+//  if (ret) return ret;
+//  mutex_lock(&inode->i_mutex);
+//
+//  cfi = CODA_FTOC(coda_file);
+//  BUG_ON(!cfi || cfi->cfi_magic != CODA_MAGIC);
+//  host_file = cfi->cfi_container;
+//
+//  ret = vfs_fsync(host_file, datasync);
+//  if (!ret && !datasync)
+//    ret = venus_fsync(inode->i_sb, coda_i2f(inode));
+//  mutex_unlock(&inode->i_mutex);
+
+  return ret;
+}
+
 
 static int mfs_release(struct inode *inode, struct file *filp) {
   printk("\t\t\t\t\t\t\t\t\t\tMFS CLOSE\n");
@@ -176,6 +209,7 @@ struct file_operations mfs_file_operations = {
 	.write          = mfs_write,//<파일에 대하여 write연산을 수행 했을 때 호출될 함수
 	.open		= mfs_open,
 	.release	= mfs_release,
+	.fsync		= mfs_fsync,
 };
 #endif
 
