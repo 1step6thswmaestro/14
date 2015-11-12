@@ -109,45 +109,45 @@ static ssize_t mfs_read(struct file* filp, char *buf, size_t len, loff_t *offset
 */
 static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t *offset)
 {
-	printk("\t\t\t\t\t\t\t\t\t\tMFS WRITE\n");
+  printk("\t\t\t\t\t\t\t\t\t\tMFS WRITE\n");
 
-	char* kernel_buf;
-	int ret = 0;
-	u128 cluster_number;
-	struct mfs_dirent dentry;
-	s16_t full_path[512] = {0,};
-	s16_t route[128] = {0, };
-	s16_t file_name[64] = {0, };
-	void* volume = filp->f_path.dentry->d_sb->s_fs_info;
+  char* kernel_buf;
+  int ret = 0;
+  u128 cluster_number;
+  struct mfs_dirent dentry;
+  s16_t full_path[512] = {0,};
+  s16_t route[128] = {0,};
+  s16_t file_name[64] = {0,};
+  void* volume = filp->f_path.dentry->d_sb->s_fs_info;
 
-	printk("try to write offset: %d len: %d\n", (int)*offset, (int)len);
+  printk("try to write offset: %d len: %d\n", (int)*offset, (int)len);
 
-	kernel_buf = vmalloc(len);
-	if(kernel_buf == NULL){
-		return 0;
-	}
+  kernel_buf = vmalloc(len);
+  if(kernel_buf == NULL) {
+    return 0;
+  }
 
-	get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
+  get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
 
-	printk("full_path: %s\n", full_path);
+  printk("full_path: %s\n", full_path);
 
-	get_file_name(full_path, file_name);
-	get_dir_path(full_path, route);
+  get_file_name(full_path, file_name);
+  get_dir_path(full_path, route);
 
-	cluster_number = get_cluster_number(volume, route);
-	get_dentry(volume, cluster_number, file_name, &dentry);
+  cluster_number = get_cluster_number(volume, route);
+  get_dentry(volume, cluster_number, file_name, &dentry);
 
-	copy_from_user(kernel_buf, buf, len);
+  copy_from_user(kernel_buf, buf, len);
 
-	ret = write_file(volume, &dentry, kernel_buf, len, *offset);
-	*offset +=ret;
+  ret = write_file(volume, &dentry, kernel_buf, len, *offset);
+  *offset +=ret;
 
-	alloc_new_entry(volume, cluster_number, file_name, &dentry);
-	vfree(kernel_buf);
+  alloc_new_entry(volume, cluster_number, file_name, &dentry);
+  vfree(kernel_buf);
 
-	i_size_write(filp->f_path.dentry->d_inode, dentry.size);
-	printk("write %d byte now offset is %d(size %d)\n", ret, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
-	return ret;
+  i_size_write(filp->f_path.dentry->d_inode, dentry.size);
+  printk("write %d byte now offset is %d(size %d)\n", ret, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
+  return ret;
 }
 
 
@@ -166,6 +166,20 @@ static int mfs_open(struct inode *inode, struct file *filp) {
 
   if (__mfs_lookup(volume, route, file_name) != FILE_DENTRY) return -1;
   printf("found file: %s\n", file_name);
+  return 0;
+}
+
+int mfs_flush(struct file *filp) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS FLUSH\n");
+  printk("%s\n", filp->f_path.dentry->d_name.name);
+  return 0;
+}
+
+
+static int mfs_release(struct inode *inode, struct file *filp) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS RELEASE\n");
+  printk("%s\n", filp->f_path.dentry->d_name.name);
+  //dput(filp->f_path.dentry);
   return 0;
 }
 
@@ -197,17 +211,12 @@ static int mfs_fsync(struct file *filp, loff_t start, loff_t end, int datasync) 
   return ret;
 }
 
-
-static int mfs_release(struct inode *inode, struct file *filp) {
-  printk("\t\t\t\t\t\t\t\t\t\tMFS CLOSE\n");
-  return 0;
-}
-
 struct file_operations mfs_file_operations = {
 	.llseek		= mfs_lseek,
 	.read           = mfs_read,//<파일에 대하여 read연산을 수행 했을 때 호출될 함수
 	.write          = mfs_write,//<파일에 대하여 write연산을 수행 했을 때 호출될 함수
 	.open		= mfs_open,
+	.flush		= mfs_flush,
 	.release	= mfs_release,
 	.fsync		= mfs_fsync,
 };
@@ -451,4 +460,10 @@ void set_normal_file_attribute(struct mfs_dirent* dentry)
 {
 	dentry->attribute &= 0xffffff00;
 	dentry->attribute += normal_file;
+}
+
+
+void set_deleted_file_attribute(struct mfs_dirent* dentry)
+{
+	dentry->attribute = 0xffffff00;
 }
