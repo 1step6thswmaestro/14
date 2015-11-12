@@ -583,26 +583,26 @@ void print_dentry(struct mfs_dirent* dentry)
 	u8_t attribute;
 	int i;
 
-	printf("- Directory Entry -\n");
-	printf("Attribute:           %d %X\n", dentry->attribute, dentry->attribute);
+	//printf("- Directory Entry -\n");
+	printf("Attribute:           %d %X\t", dentry->attribute, dentry->attribute);
 	printf("Extended Attribute:  %d %X\n", dentry->extended_attribute, dentry->extended_attribute);
 	printf("name:                ");
 	for(i=0; i<24; i++){
 		printf("%c", dentry->name[i]);
 	}
 	printf("\n");
-	for(i=0; i<24; i++){
-		printf("%02X ", dentry->name[i]);
-	}
-	printf("\n");
+	//for(i=0; i<24; i++){
+	//	printf("%02X ", dentry->name[i]);
+	//}
+	//printf("\n");
 
-	printf("head_cluster_number: %d %X\n", dentry->head_cluster_number, dentry->head_cluster_number);
+	printf("head_cluster_number: %d %X\t", dentry->head_cluster_number, dentry->head_cluster_number);
 	printf("size:                %d %X\n", dentry->size, dentry->size);
 
-	printf("reserved:\n");
-	for(i=0; i<23; i++){
-		printf("%02X ", dentry->reserved[i]);
-	}
+	//printf("reserved:\n");
+	//for(i=0; i<23; i++){
+	//	printf("%02X ", dentry->reserved[i]);
+	//}
 
-	printf("\n\n\n");
+	printf("\n");
 }
