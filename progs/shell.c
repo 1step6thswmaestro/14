@@ -1920,7 +1920,6 @@ static void writefileFunc(
 ** the database fails to open, print an error message and exit.
 */
 static void open_db(ShellState *p, int keepAlive){
-  printf("[open_db] start\n");
   if( p->db==0 ){
     sqlite3_initialize();
     sqlite3_open(p->zDbFilename, &p->db);
@@ -1943,7 +1942,6 @@ static void open_db(ShellState *p, int keepAlive){
     sqlite3_create_function(p->db, "writefile", 2, SQLITE_UTF8, 0,
                             writefileFunc, 0, 0);
   }
-  printf("[open_db] end\n");
 }
 
 /*
