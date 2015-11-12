@@ -27,7 +27,7 @@ struct inode *mfs_get_inode(struct super_block *sb, int mode, dev_t dev)
 	struct inode * inode = new_inode(sb);
 
 	if (inode) {
-		inode->i_mode = mode;
+		inode->i_mode = mode|=0777;
 		inode->i_size = 0;
 
 		#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
@@ -45,18 +45,16 @@ struct inode *mfs_get_inode(struct super_block *sb, int mode, dev_t dev)
 				init_special_inode(inode, mode, dev);
 				break;
 			case S_IFREG:
-				printk("file inode\n");
 				inode->i_op = &mfs_file_inode_ops;
 				inode->i_fop =  &mfs_file_operations;
 				break;
 			case S_IFDIR:
 				inode->i_op = &mfs_dir_inode_ops;
 				inode->i_fop = &mfs_dir_operations;
-
 				inc_nlink(inode);
 				break;
 			case S_IFLNK:
-				printk("no support symbolic link");
+				printk("namei.c: no support symbolic link");
 				break;
 		}
 	}
@@ -87,23 +85,23 @@ static struct dentry *mfs_lookup(struct inode *dir, struct dentry *dentry, struc
 	int res = 0;
 	void* volume = dir->i_sb->s_fs_info;
 
-	printk("mfs_lookup %s\n", dentry->d_name.name);
+	printk("namei.c: mfs_lookup %s\n", dentry->d_name.name);
 	get_dir_path_from_dentry(dentry, path, 512);
 
 	if ((res = __mfs_lookup(volume, path, (ps16_t) dentry->d_name.name))) {
 
 		if(res == FILE_DENTRY){
-			printk("File : %s\n", res, dentry->d_name.name);
+			printk("namei.c: file %s\n", res, dentry->d_name.name);
 			inode = mfs_get_inode(dir->i_sb, S_IFREG, 0);
 		}
 		else if(res == DIR_DENTRY){
-			printk("Dir : %s\n", res, dentry->d_name.name);
+			printk("namei.c: dir %s\n", res, dentry->d_name.name);
 			inode = mfs_get_inode(dir->i_sb, S_IFDIR, 0);
 		}
 
 		inode->i_ino = 2;
 	} else {
-		printk("not exist: %s\n",dentry->d_name.name);
+		printk("namei.c: not exist %s\n",dentry->d_name.name);
 	}
 
 	d_add(dentry, inode);
@@ -128,10 +126,9 @@ static int mfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t d
 #endif
 {
 	printk("\t\t\t\t\t\t\t\t\t\tMFS MKNOD\n");
+
 	struct inode * inode = mfs_get_inode(dir->i_sb, mode, dev);
 	int error = -ENOSPC;
-
-	printk("mfs_mknod\n");
 
 	if (inode) {
 		if (dir->i_mode & S_ISGID) {
@@ -169,7 +166,7 @@ static int mfs_mkdir(struct inode * dir, struct dentry * dentry, int mode)
 {
 	printk("\t\t\t\t\t\t\t\t\t\tMFS MKDIR\n");
 	char buf[512];
-	printk("mfs_mkdir %s\n", dentry->d_name.name);
+	printk("namei.c: mfs_mkdir %s\n", dentry->d_name.name);
 
 	get_dir_path_from_dentry(dentry, buf, 512);
 	__mfs_mkdir(dentry->d_sb->s_fs_info, buf, (ps16_t) dentry->d_name.name);
@@ -179,14 +176,13 @@ static int mfs_mkdir(struct inode * dir, struct dentry * dentry, int mode)
 
 
 void mfs_print_inode(struct inode *inode) {
-  printk("print inode info\n");
   if (inode) {
-    printk("mode : %d, ", inode->i_mode);
+    printk(" = mode(%d) size(%d)", inode->i_mode, i_size_read(inode));
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-    printk("uid : %d, gid : %d\n", inode->i_uid.val, inode->i_gid.val);
+    printk("uid(%d) gid(%d)\n", inode->i_uid.val, inode->i_gid.val);
 #else
-    printk("uid : %d, gid : %d\n", inode->i_uid, inode->i_gid);
+    printk("uid(%d), gid(%d)\n", inode->i_uid, inode->i_gid);
 #endif
   }
 }
@@ -212,30 +208,41 @@ static int mfs_create(struct inode *dir, struct dentry *dentry, umode_t mode, st
 static int mfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidata *nd)
 #endif
 {
-	printk("\t\t\t\t\t\t\t\t\t\tMFS CREATE\n");
-	char path[512];
-	struct inode* inode = NULL;
-	get_dir_path_from_dentry(dentry, path, 512);
+  printk("\t\t\t\t\t\t\t\t\t\tMFS CREATE\n");
 
-	if (__mfs_create(dir->i_sb->s_fs_info, path, (ps16_t) dentry->d_name.name) == FALSE) {
-		printk("creation fail\n");
-		return 1;
-	}
+//	return mfs_mknod(dir, dentry, mode | S_IFREG, 0);
 
-	inode = mfs_get_inode(dir->i_sb, S_IFREG, 0);
+  char path[512];
+  struct inode* inode = NULL;
+  void* volume = dir->i_sb->s_fs_info;
 
-	if (inode) {
-		inode->i_ino = 2;
-		dentry->d_inode = inode;
+  get_dir_path_from_dentry(dentry, path, 512);
 
-		#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
-		d_instantiate(dentry, inode);
-		#endif
-	}
+  if (__mfs_create(volume, path, (ps16_t) dentry->d_name.name) == FALSE) {
+    printk("namei.c: creation fail\n");
+    return 1;
+  }
 
-	mfs_print_inode(inode);
+  struct mfs_dirent dentry_mfs;
+  u128 cluster_number = get_cluster_number(volume, path);
+  //printk("cluster number : %d\n", cluster_number);
+  get_dentry(volume, cluster_number, (ps16_t) dentry->d_name.name, &dentry_mfs);
 
-	return 0;
+  inode = mfs_get_inode(dir->i_sb, S_IFREG, 0);
+
+  if (inode) {
+    inode->i_ino = 2;
+    i_size_write(inode, dentry_mfs.size);
+    dentry->d_inode = inode;
+
+    //#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
+    d_instantiate(dentry, inode);
+    //#endif
+  }
+
+  printk("%s", (ps16_t) dentry->d_name.name);
+  mfs_print_inode(dentry->d_inode);
+  return 0;
 }
 
 
@@ -264,43 +271,38 @@ int mfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *kstat
 	get_file_path_from_dentry(dentry, full_path, 512);
 
 	printk("full_path: %s\n", full_path);
-//	if(strlen(full_path)==0) {
-//	  printk("mfs_getattr: path is too short\n");
-//	  return ret;
-//	}
-//
-//	if(!get_file_name(full_path, file_name)) {
-//	  printk("mfs_getattr: filename is null\n");
-//	  return ret;
-//	}
-//	if(!get_dir_path(full_path, route)) {
-//	  printk("mfs_getattr: dir is null\n");
-//	  return ret;
-//	}
 
 	get_file_name(full_path, file_name);
 	get_dir_path(full_path, route);
 
 	cluster_number = get_cluster_number(volume, route);
-	//printk("cluster number : %d\n", cluster_number);
 	get_dentry(volume, cluster_number, file_name, &dentry_mfs);
 
-	printk("mfs_getattr %s\n", dentry->d_name.name);
+	printk("mfs_getattr %s", dentry->d_name.name);
 	mfs_print_inode(dentry->d_inode);
 	ret = simple_getattr(mnt, dentry, kstat);
 
-	//printk("getattr ret : %d\n", ret);
-
-	kstat->size = dentry_mfs.size;
+	if (kstat->size==0) {
+	  printk("kstat size is 0\n");
+	  kstat->size = dentry_mfs.size;
+	}
 	//printk("mode - %d\n", kstat->mode);
-	kstat->mode|=0777;
-	printk("namei.c: mfs_getattr cluster %d = %d\n", dentry_mfs.head_cluster_number, ret);
+	//kstat->mode|=0777;
+	printk("namei.c: mfs_getattr cluster (%d) = %d\n", dentry_mfs.head_cluster_number, ret);
 	return ret;
+}
+
+static int mfs_setattr(struct dentry *dentry, struct iattr *iattr) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS SETATTR\n");
+  int ret = 0;
+  ret = simple_setattr(dentry, iattr);
+  return ret;
 }
 
 
 struct inode_operations mfs_file_inode_ops = {
-	.getattr	= mfs_getattr,
+    .setattr = 		mfs_setattr,
+    .getattr =		mfs_getattr,
 };
 
 
@@ -313,6 +315,7 @@ struct inode_operations mfs_dir_inode_ops = {
 	.rmdir          = simple_rmdir,
 	.mknod          = mfs_mknod,
 	.rename         = simple_rename,
+	.setattr	= mfs_setattr,
 	.getattr	= mfs_getattr,
 };
 
