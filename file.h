@@ -22,3 +22,4 @@ BOOL is_long_file_name(u8_t);
 BOOL is_deleted_file(u8_t);
 
 void set_normal_file_attribute(struct mfs_dirent*);
+void set_deleted_file_attribute(struct mfs_dirent*);
