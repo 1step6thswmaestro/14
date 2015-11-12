@@ -237,6 +237,7 @@ static int mfs_create(struct inode *dir, struct dentry *dentry, int mode, struct
 
     //#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0)
     d_instantiate(dentry, inode);
+    //dget(dentry);
     //#endif
   }
 
@@ -299,10 +300,43 @@ static int mfs_setattr(struct dentry *dentry, struct iattr *iattr) {
   return ret;
 }
 
+static int mfs_unlink(struct inode *inode, struct dentry *dentry) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS UNLINK\n");
+  printk("%s\n", dentry->d_name.name);
+
+  void* volume = dentry->d_sb->s_fs_info;
+  struct mfs_dirent dentry_mfs;
+  s16_t full_path[512] = { 0, };
+  s16_t route[128] = {0, };
+
+  get_file_path_from_dentry(dentry, full_path, 512);
+
+  printk("full_path: %s\n", full_path);
+
+  get_file_name(full_path, dentry->d_name.name);
+  get_dir_path(full_path, route);
+
+  u128 cluster_number = get_cluster_number(volume, route);
+  get_dentry(volume, cluster_number, dentry->d_name.name, &dentry_mfs);
+
+  printk("delete bef %x\n", dentry_mfs.attribute);
+  set_deleted_file_attribute(&dentry_mfs);
+  printk("deleted %x\n", dentry_mfs.attribute);
+  alloc_new_entry(volume, cluster_number, dentry->d_name.name, &dentry_mfs);
+
+  int ret = 0;
+  ret = simple_unlink(inode, dentry);
+
+
+  return ret;
+}
+
 
 struct inode_operations mfs_file_inode_ops = {
-    .setattr = 		mfs_setattr,
-    .getattr =		mfs_getattr,
+//    .link		= simple_link,
+    .setattr		= mfs_setattr,
+    .getattr		= mfs_getattr,
+    .unlink		= mfs_unlink,
 };
 
 
@@ -310,7 +344,7 @@ struct inode_operations mfs_dir_inode_ops = {
 	.create         = mfs_create,
 	.lookup         = mfs_lookup,
 	.link		= simple_link,
-	.unlink         = simple_unlink,
+	.unlink         = mfs_unlink,
 	.mkdir          = mfs_mkdir,
 	.rmdir          = simple_rmdir,
 	.mknod          = mfs_mknod,
