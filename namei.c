@@ -303,6 +303,7 @@ static int mfs_setattr(struct dentry *dentry, struct iattr *iattr) {
 struct inode_operations mfs_file_inode_ops = {
     .setattr = 		mfs_setattr,
     .getattr =		mfs_getattr,
+    .unlink = simple_unlink,
 };
 
 
