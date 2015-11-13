@@ -245,15 +245,13 @@ BOOL alloc_new_dirent (struct mfs_volume* volume, u128 dir_cluster_number, struc
 #endif
     read_volume(volume, cluster, sizeof(u8_t), CLUSTER_SIZE);
 
-    current_dirent = get_first_entry(cluster, &current_entry_number,
-				     has_long_file_name_next_entry);
+    current_dirent = get_first_entry(cluster, &current_entry_number, has_long_file_name_next_entry);
 
     while (current_entry_number != entry_per_data_cluster) {
-      // if (current_dirent->size == 0)
-      if (is_deleted_file(current_dirent->attribute)
-	  || is_deleted_dir(current_dirent->attribute)) {
-	wirte_position = read_position
-	    + (current_entry_number * sizeof(struct mfs_dirent));
+      //if (current_dirent->size == 0) {
+      //if (is_deleted_file(current_dirent->attribute) || is_deleted_dir(current_dirent->attribute)) {
+      if (is_empty_entry(current_dirent)) {
+	wirte_position = read_position + (current_entry_number * sizeof(struct mfs_dirent));
 
 #ifdef __KERNEL__
 	seek_volume(volume, wirte_position);
@@ -473,5 +471,11 @@ u128 read_cluster (struct mfs_volume* volume, u128 cluster_number) {
   // Volume에서 읽을 위치를 계산한다. DataCluster Begin Address + 건내져온 클러스터 수치까지의 크기(nCurClusterNumber - 2는 Index 0,1은 쓰이지 않기 때문이다. 시작이 2부터이다.)
   return ((sb.data_cluster_sector * sb.bytes_per_sector)
       + ((cluster_number - 2) * CLUSTER_SIZE));
+}
+
+BOOL is_empty_entry(struct mfs_dirent* dentry) {
+  if (!strlen(dentry->name))
+    return TRUE;
+  return FALSE;
 }
 
