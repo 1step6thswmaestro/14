@@ -333,10 +333,9 @@ static int mfs_unlink(struct inode *inode, struct dentry *dentry) {
 
 
 struct inode_operations mfs_file_inode_ops = {
-//    .link		= simple_link,
+    .unlink		= mfs_unlink,
     .setattr		= mfs_setattr,
     .getattr		= mfs_getattr,
-    .unlink		= mfs_unlink,
 };
 
 
