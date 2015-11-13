@@ -466,4 +466,5 @@ void set_normal_file_attribute(struct mfs_dirent* dentry)
 void set_deleted_file_attribute(struct mfs_dirent* dentry)
 {
 	dentry->attribute = 0xffffff00;
+	dentry->attribute += deleted_file;
 }
