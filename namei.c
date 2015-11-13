@@ -304,6 +304,7 @@ static int mfs_unlink(struct inode *inode, struct dentry *dentry) {
   printk("\t\t\t\t\t\t\t\t\t\tMFS UNLINK\n");
   printk("%s\n", dentry->d_name.name);
 
+  int ret = 0;
   void* volume = dentry->d_sb->s_fs_info;
   struct mfs_dirent dentry_mfs;
   s16_t full_path[512] = { 0, };
@@ -324,10 +325,7 @@ static int mfs_unlink(struct inode *inode, struct dentry *dentry) {
   printk("deleted %x\n", dentry_mfs.attribute);
   alloc_new_entry(volume, cluster_number, dentry->d_name.name, &dentry_mfs);
 
-  int ret = 0;
   ret = simple_unlink(inode, dentry);
-
-
   return ret;
 }
 
