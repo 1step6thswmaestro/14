@@ -24,3 +24,4 @@ BOOL alloc_new_entry(struct mfs_volume*, u128,
 
 u128 read_cluster(struct mfs_volume*, u128);
 
+BOOL is_empty_entry(struct mfs_dirent*);
