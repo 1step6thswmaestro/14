@@ -211,6 +211,23 @@ static int mfs_fsync(struct file *filp, loff_t start, loff_t end, int datasync) 
   return ret;
 }
 
+static int mfs_fasync (int a, struct file *filp, int b) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS FASYNC\n");
+  printk("%s\n", filp->f_path.dentry->d_name.name);
+
+  return 0;
+}
+
+static int mfs_lock(struct file *filp, int cmd, struct file_lock *lock) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS LOCK\n");
+  printk("%s\n", filp->f_path.dentry->d_name.name);
+  if (cmd == F_GETLK) printk("test whether a lock is able to be applied\n");
+  else if (cmd == F_SETLK) printk("attempt to set a lock\n");
+  else if (cmd == F_SETLKW) printk("attempt to set a lock and block until able to do so\n");
+
+  return 0;
+}
+
 struct file_operations mfs_file_operations = {
 	.llseek		= mfs_lseek,
 	.read           = mfs_read,//<파일에 대하여 read연산을 수행 했을 때 호출될 함수
@@ -219,6 +236,8 @@ struct file_operations mfs_file_operations = {
 	.flush		= mfs_flush,
 	.release	= mfs_release,
 	.fsync		= mfs_fsync,
+	.fasync		= mfs_fasync,
+	.lock		= mfs_lock,
 };
 #endif
 
