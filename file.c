@@ -57,41 +57,56 @@ static loff_t mfs_lseek(struct file *filp, loff_t offset, int whence) {
 */
 static ssize_t mfs_read(struct file* filp, char *buf, size_t len, loff_t *offset)
 {
-	printk("\t\t\t\t\t\t\t\t\t\tMFS READ\n");
+  printf("\t\t\t\t\t\t\t\t\t\tMFS READ\n");
 
-	char* kernel_buf;
-	int ret = 0;
-	u128 cluster_number;
-	struct mfs_dirent dentry;
-	s16_t full_path[512] = {0,};
-	s16_t route[128] = {0, };
-	s16_t file_name[64] = {0, };
-	void* volume = filp->f_path.dentry->d_sb->s_fs_info;
+  char* kernel_buf;
 
-	printk("try to read offset: %d len: %d\n",(int)*offset,(int)len);
+  int n_read = 0;
+  int n_total = 0;
 
-	kernel_buf = vmalloc(len);
-	if(kernel_buf == NULL){
-		return 0;
-	}
+  u128 cluster_number;
+  struct mfs_dirent dentry;
+  s16_t full_path[512] = {0,};
+  s16_t route[128] = {0, };
+  s16_t file_name[64] = {0, };
+  void* volume = filp->f_path.dentry->d_sb->s_fs_info;
 
-	get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
+  printf("\t\t\t\t\t\t\t\t\t\tMFS READ: try to read offset: %d len: %d\n",(int)*offset,(int)len);
+  kernel_buf = vmalloc(len);
 
-	get_dir_path(full_path, route);
-	get_file_name(full_path, file_name);
+  if(kernel_buf == NULL)
+  {
+    printf("\t\t\t\t\t\t\t\t\t\tMFS READ: kernel_buf is NULL\n");
+    return 0;
+  }
 
-	cluster_number = get_cluster_number(volume, route);
-	get_dentry(volume, cluster_number, file_name, &dentry);
+  get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
 
-	ret = read_file(volume, &dentry , kernel_buf , len, *offset);
-	*offset += ret;
+  get_dir_path(full_path, route);
+  get_file_name(full_path, file_name);
 
-	copy_to_user(buf, kernel_buf, ret);
-	vfree(kernel_buf);
+  cluster_number = get_cluster_number(volume, route);
 
-	//printk("read %d byte now offset is %d\n", ret, (int)*offset);
-	printk("kernel buf : %s\n", kernel_buf);
-	return ret;
+  get_dentry(volume, cluster_number, file_name, &dentry);
+
+  while(len > 0)
+  {
+
+    n_read = read_file(volume, &dentry, &kernel_buf[n_total], len, *offset);
+    printf("\t\t\t\t\t\t\t\t\t\tMFS READ: read(%d) by (len: %d, offset: %d)\n", n_read, len, *offset);
+    if(n_read <= 0) break;
+
+    *offset += n_read;
+    n_total += n_read;
+    len -= n_read;
+  }
+
+  copy_to_user(buf, kernel_buf, n_total);
+  vfree(kernel_buf);
+
+  printf("\t\t\t\t\t\t\t\t\t\tMFS READ: read %d byte now offset is %d\n", n_total, (int)*offset);
+
+  return n_total;
 }
 
 /**
@@ -109,10 +124,13 @@ static ssize_t mfs_read(struct file* filp, char *buf, size_t len, loff_t *offset
 */
 static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t *offset)
 {
-  printk("\t\t\t\t\t\t\t\t\t\tMFS WRITE\n");
+  printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE\n");
 
   char* kernel_buf;
-  int ret = 0;
+
+  int n_total = 0;
+  int n_write = 0;
+
   u128 cluster_number;
   struct mfs_dirent dentry;
   s16_t full_path[512] = {0,};
@@ -120,34 +138,45 @@ static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t 
   s16_t file_name[64] = {0,};
   void* volume = filp->f_path.dentry->d_sb->s_fs_info;
 
-  printk("try to write offset: %d len: %d\n", (int)*offset, (int)len);
+  printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: try to write offset: %d len: %d\n", (int)*offset, (int)len);
 
   kernel_buf = vmalloc(len);
-  if(kernel_buf == NULL) {
+  if(kernel_buf == NULL)
+  {
+    printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: kernel_buf is NULL\n");
     return 0;
   }
 
   get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
 
-  printk("full_path: %s\n", full_path);
+  printf("full_path: %s\n", full_path);
 
   get_file_name(full_path, file_name);
   get_dir_path(full_path, route);
 
   cluster_number = get_cluster_number(volume, route);
-  get_dentry(volume, cluster_number, file_name, &dentry);
 
+  get_dentry(volume, cluster_number, file_name, &dentry);
   copy_from_user(kernel_buf, buf, len);
 
-  ret = write_file(volume, &dentry, kernel_buf, len, *offset);
-  *offset +=ret;
+  while(len > 0)
+  {
+    n_write = write_file(volume, &dentry, &kernel_buf[n_total], len, *offset);
+    printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: write file(%d) by (len: %d, offset: %d)\n", n_write, len, *offset);
+    if(n_write <= 0) break;
+
+    *offset += n_write;
+    n_total += n_write;
+    len -= n_write;
+  }
 
   alloc_new_entry(volume, cluster_number, file_name, &dentry);
   vfree(kernel_buf);
 
   i_size_write(filp->f_path.dentry->d_inode, dentry.size);
-  printk("write %d byte now offset is %d(size %d)\n", ret, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
-  return ret;
+
+  printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: write %d byte now offset is %d(size %d)\n", n_total, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
+  return n_total;
 }
 
 
@@ -450,7 +479,10 @@ int write_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 #endif
 	write_volume(volume, buf, sizeof(u8_t), valid_len);
 
-	dentry->size = dentry->size + valid_len;
+  if(dentry->size < valid_len + offset)
+  {
+    dentry->size = valid_len + offset;
+  }
 
 	return valid_len;
 }
