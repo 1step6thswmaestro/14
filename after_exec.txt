@@ -1,0 +1,11 @@
+mdbfs> .format
+....................: disk.img -c 1024 -n VNAME
+mdbfs> .q
+cd progs;
+./mount.sh;
+cd /mnt/mfs;
+sudo su;
+.../mdbfs/progs/mdbfs;
+mdbfs> .open test.db;
+mdbfs> create table tb(a int);
+mdbfs> .save a.db;

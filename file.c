@@ -201,28 +201,73 @@ static int mfs_fsync(struct file *filp, loff_t start, loff_t end, int datasync) 
   printk("\t\t\t\t\t\t\t\t\t\tMFS FSYNC\n");
 
   int ret = 0;
-//  struct file *host_file;
-//  struct inode *inode = file_inode(filp);
-//  //struct inode *coda_inode = file_inode(coda_file);
-//  struct coda_file_info *cfi;
-//
-//  if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) || S_ISLNK(inode->i_mode)))
-//    return -EINVAL;
-//
-//  ret = filemap_write_and_wait_range(inode->i_mapping, start, end);
-//  if (ret) return ret;
-//  mutex_lock(&inode->i_mutex);
-//
-//  cfi = CODA_FTOC(coda_file);
-//  BUG_ON(!cfi || cfi->cfi_magic != CODA_MAGIC);
-//  host_file = cfi->cfi_container;
-//
-//  ret = vfs_fsync(host_file, datasync);
-//  if (!ret && !datasync)
-//    ret = venus_fsync(inode->i_sb, coda_i2f(inode));
-//  mutex_unlock(&inode->i_mutex);
-
   return ret;
+}
+
+static int mfs_fasync (int a, struct file *filp, int b) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS FASYNC\n");
+  printk("%s\n", filp->f_path.dentry->d_name.name);
+
+  return 0;
+}
+
+static int mfs_lock(struct file *filp, int cmd, struct file_lock *fl) {
+  printk("\t\t\t\t\t\t\t\t\t\tMFS LOCK\n");
+  printk("%s\n", filp->f_path.dentry->d_name.name);
+  if (cmd == F_GETLK) printk("test whether a lock is able to be applied\n");
+  else if (cmd == F_SETLK) printk("attempt to set a lock\n");
+  else if (cmd == F_SETLKW) printk("attempt to set a lock and block until able to do so\n");
+  else {
+    printk("cmd = %d\n", cmd);
+  }
+  printk("fl->fl_type = %d\n",fl->fl_type);
+  switch(fl->fl_type) {
+    case F_UNLCK:
+      printk("UNLOCK\n");
+      break;
+    case F_RDLCK:
+      printk("RDLCK\n");
+      break;
+    case F_WRLCK:
+      printk("F_WRLCK\n");
+      break;
+    default:
+      printk("default\n");
+  }
+
+//  if (filp->f_op->lock)
+//    return filp->f_op->lock(filp, cmd, fl);
+//  else
+//    return posix_lock_file(filp, fl, NULL);
+
+  //filp->f_op->flock(filp, F_SETLKW, &fl);
+  //int err = posix_lock_file(filp, fl, NULL);
+//  int err=0;
+//  return err;
+
+//  struct inode *inode = filp->f_path.dentry->d_inode;
+//  void* volume = filp->f_path.dentry->d_sb->s_fs_info;
+//  int err = 0;
+//
+//  if (cmd == F_CANCELLK) {
+//    printk("F_CANCELLK\n");
+//  }
+//  else if (cmd == F_GETLK) {
+//    if (fc->no_lock) {
+//      posix_test_lock(file, fl);
+//      err = 0;
+//    }
+//    else
+//    err = fuse_getlk(file, fl);
+//    printk("F_GETLK\n");
+//  }
+//  else {
+//    if (volume->no_lock)
+//    err = posix_lock_file(filp, fl, NULL);
+//    else
+//    err = mfs_setlk(filp, fl, 0);
+//  }
+//  return err;
 }
 
 struct file_operations mfs_file_operations = {
@@ -233,6 +278,8 @@ struct file_operations mfs_file_operations = {
 	.flush		= mfs_flush,
 	.release	= mfs_release,
 	.fsync		= mfs_fsync,
+	.fasync		= mfs_fasync,
+	.lock		= mfs_lock,
 };
 #endif
 
