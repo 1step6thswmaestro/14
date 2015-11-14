@@ -109,10 +109,13 @@ static ssize_t mfs_read(struct file* filp, char *buf, size_t len, loff_t *offset
 */
 static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t *offset)
 {
-  printk("\t\t\t\t\t\t\t\t\t\tMFS WRITE\n");
+  printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE\n");
 
   char* kernel_buf;
-  int ret = 0;
+
+  int n_total = 0;
+  int n_write = 0;
+
   u128 cluster_number;
   struct mfs_dirent dentry;
   s16_t full_path[512] = {0,};
@@ -120,34 +123,45 @@ static ssize_t mfs_write(struct file* filp, const char *buf, size_t len, loff_t 
   s16_t file_name[64] = {0,};
   void* volume = filp->f_path.dentry->d_sb->s_fs_info;
 
-  printk("try to write offset: %d len: %d\n", (int)*offset, (int)len);
+  printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: try to write offset: %d len: %d\n", (int)*offset, (int)len);
 
   kernel_buf = vmalloc(len);
-  if(kernel_buf == NULL) {
+  if(kernel_buf == NULL)
+  {
+    printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: kernel_buf is NULL\n");
     return 0;
   }
 
   get_file_path_from_dentry(filp->f_path.dentry, full_path, 512);
 
-  printk("full_path: %s\n", full_path);
+  printf("full_path: %s\n", full_path);
 
   get_file_name(full_path, file_name);
   get_dir_path(full_path, route);
 
   cluster_number = get_cluster_number(volume, route);
-  get_dentry(volume, cluster_number, file_name, &dentry);
 
+  get_dentry(volume, cluster_number, file_name, &dentry);
   copy_from_user(kernel_buf, buf, len);
 
-  ret = write_file(volume, &dentry, kernel_buf, len, *offset);
-  *offset +=ret;
+  while(len > 0)
+  {
+    n_write = write_file(volume, &dentry, &kernel_buf[n_total], len, *offset);
+    printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: write file(%d) by (len: %d, offset: %d)\n", n_write, len, *offset);
+    if(n_write <= 0) break;
+
+    *offset += n_write;
+    n_total += n_write;
+    len -= n_write;
+  }
 
   alloc_new_entry(volume, cluster_number, file_name, &dentry);
   vfree(kernel_buf);
 
   i_size_write(filp->f_path.dentry->d_inode, dentry.size);
-  printk("write %d byte now offset is %d(size %d)\n", ret, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
-  return ret;
+
+  printf("\t\t\t\t\t\t\t\t\t\tMFS WRITE: write %d byte now offset is %d(size %d)\n", n_total, (int)*offset, (int)i_size_read(filp->f_path.dentry->d_inode));
+  return n_total;
 }
 
 
