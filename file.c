@@ -220,6 +220,7 @@ static int mfs_lock(struct file *filp, int cmd, struct file_lock *fl) {
     default:
       printk("default\n");
   }
+  return 0;
 
 //  if (filp->f_op->lock)
 //    return filp->f_op->lock(filp, cmd, fl);
