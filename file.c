@@ -478,7 +478,10 @@ int write_file(struct mfs_volume* volume, struct mfs_dirent* dentry, char* buf,
 #endif
 	write_volume(volume, buf, sizeof(u8_t), valid_len);
 
-	dentry->size = dentry->size + valid_len;
+  if(dentry->size < valid_len + offset)
+  {
+    dentry->size = valid_len + offset;
+  }
 
 	return valid_len;
 }
