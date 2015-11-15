@@ -20,12 +20,17 @@
 
 #include <features.h>
 #include <endian.h>
+
 #ifndef __KERNEL__
+
 #include <sched.h>
 #include <time.h>
+
 #else
+
 #include <linux/sched.h>
 #include <linux/time.h>
+
 #endif
 
 #include <bits/pthreadtypes.h>
