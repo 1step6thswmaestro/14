@@ -4,7 +4,7 @@ obj-m += mfs_mod.o
 mfs_mod-objs := util.o volume.o fat.o entry.o file.o dir.o namei.o super.o sqlite3.o
 #EXTRA_CFLAGS=-std=c99
 
-ccflags-y := -w -I/usr/include -I/usr/include/x86_64-linux-gnu/
+ccflags-y := -mhard-float -msse -mpreferred-stack-boundary=4 -w -I/usr/include -I/usr/include/x86_64-linux-gnu/
 #CFLAGS_sqlite3.o = -lpthread -ldl
 #LDFLAGS_sqlite3.o = -lpthread -ldl
 ldflags-y += -lpthread -ldl
