@@ -408,6 +408,7 @@ extern int pthread_attr_setstack (pthread_attr_t *__attr, void *__stackaddr,
 #endif
 
 #ifdef __USE_GNU
+#ifndef __KERNEL__
 /* Thread created with attribute ATTR will be limited to run only on
    the processors represented in CPUSET.  */
 extern int pthread_attr_setaffinity_np (pthread_attr_t *__attr,
@@ -421,7 +422,7 @@ extern int pthread_attr_getaffinity_np (const pthread_attr_t *__attr,
 					size_t __cpusetsize,
 					cpu_set_t *__cpuset)
      __THROW __nonnull ((1, 3));
-
+#endif
 /* Get the default attributes used by pthread_create in this process.  */
 extern int pthread_getattr_default_np (pthread_attr_t *__attr)
      __THROW __nonnull ((1));
@@ -485,7 +486,7 @@ extern int pthread_setconcurrency (int __level) __THROW;
    implementation.  */
 extern int pthread_yield (void) __THROW;
 
-
+#ifndef __KERNEL__
 /* Limit specified thread TH to run only on the processors represented
    in CPUSET.  */
 extern int pthread_setaffinity_np (pthread_t __th, size_t __cpusetsize,
@@ -497,7 +498,7 @@ extern int pthread_getaffinity_np (pthread_t __th, size_t __cpusetsize,
 				   cpu_set_t *__cpuset)
      __THROW __nonnull ((3));
 #endif
-
+#endif
 
 /* Functions for handling initialization.  */
 
