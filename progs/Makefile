@@ -2,7 +2,7 @@ CC = gcc
 
 SRCS_MKFS = ../util.c ../volume.c mkfs.c
 SRCS_FUSE = ../util.c ../volume.c ../fat.c ../entry.c ../file.c ../dir.c fuse.c
-SRCS_MDBFS = ../util.c ../volume.c ../fat.c ../entry.c ../file.c ../dir.c mdbfs.c ../sqliteio.c sqlite3.c shell.c
+SRCS_MDBFS = ../util.c ../volume.c ../fat.c ../entry.c ../file.c ../dir.c ../sqlite3.c mdbfs.c shell.c
 
 CFLAGS_MKFS = -g -O1 -Wall -fno-strict-aliasing -std=gnu99 
 CFLAGS_FUSE = -Wall `pkg-config fuse --cflags --libs` -lpthread
