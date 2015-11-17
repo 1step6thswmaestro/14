@@ -46,7 +46,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include "sqlite3.h"
+#include "../sqlite3.h"
 #if SQLITE_USER_AUTHENTICATION
 # include "sqlite3userauth.h"
 #endif
@@ -2702,11 +2702,13 @@ static int do_meta_command(char *zLine, ShellState *p){
     sqlite3_backup_finish(pBackup);
     if( rc==SQLITE_DONE ){
       rc = 0;
+      printf("sqlite3_backup_finish is SQLITE_DONE\n");
     }else{
-      fprintf(stderr, "Error: %s\n", sqlite3_errmsg(pDest));
+      fprintf(stderr, "sqlite3_backup_finish Error: %s\n", sqlite3_errmsg(pDest));
       rc = 1;
     }
     sqlite3_close(pDest);
+    printf("sqlite3_closed\n");
   }else
 
   if( c=='b' && n>=3 && strncmp(azArg[0], "bail", n)==0 ){
