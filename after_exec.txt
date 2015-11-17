@@ -6,6 +6,4 @@ cd progs;
 cd /mnt/mfs;
 sudo su;
 .../mdbfs/progs/mdbfs;
-mdbfs> .open test.db;
-mdbfs> create table tb(a int);
-mdbfs> .save a.db;
+mdbfs> .open test.db
