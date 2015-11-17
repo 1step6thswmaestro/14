@@ -277,23 +277,23 @@ static void create_volume(struct mfs_volume* new_volume, ps8_t volume_name, u128
   printf("\n\n\n");
 }
 
-void create_dummy(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
-{
-  int n_write;
-
-  create_sqlite_file(volume, route, file_name);
-
-  while (len > 0) {
-    n_write = write_sqlite_file(volume, route, file_name, buff, len, offset);
-
-    buff += n_write;
-    offset += n_write;
-    len -= n_write;
-
-    if (n_write <= 0)
-      break;
-  }
-}
+//void create_dummy(struct mfs_volume* volume, char* route, char* file_name, char* buff, int len, u64_t offset)
+//{
+//  int n_write;
+//
+//  create_sqlite_file(volume, route, file_name);
+//
+//  while (len > 0) {
+//    n_write = write_sqlite_file(volume, route, file_name, buff, len, offset);
+//
+//    buff += n_write;
+//    offset += n_write;
+//    len -= n_write;
+//
+//    if (n_write <= 0)
+//      break;
+//  }
+//}
 
 int mfs_format(int argc, char **argv)
 {
