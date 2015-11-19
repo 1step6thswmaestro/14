@@ -1,54 +1,81 @@
-#Maestro File System for Linux
-MFS(Maestro File System)는 SW Maestro 과정의 파일시스템 개발 프로젝트입니다. 본 레포지터리는 MFS를 리눅스에서 사용할 수 있도록 한 구현체입니다. 리눅스 커널모듈(mfs_mod.ko)과 mkfs.mfs, 그리고 mfs-fuse로 구성되어 있습니다.
+#커널기반 데이터베이스 파일시스템(MDBFS)
+MDBFS(Maestro DataBase File System)는 MFS(Maestro File System)와 SQLite를 기반으로한 데이터베이스를 내장한 파일시스템 개발 프로젝트입니다.<br />
+본 레포지터리는 MDBFS를 리눅스에서 사용할 수 있도록 한 구현체입니다.<br />
+MDBFS는 리눅스 커널모듈(mfs_mod.ko)과 mdbfs 그리고 mfs-fuse로 구성되어 있습니다.<br />
+
+##Team
+###Mentee
+- 장재혁(팀장)
+- 이영인
+- 조태상
+
+###Mentor
+- 김태하
 
 ##Download
+$ git clone http://bitbucket.org/mdbfs/mdbfs.git
 
-$ git clone http://bitbucket.org/maestrofs/mfs-linux.git
 
 ##Build
-
 ###mfs_mod.ko
-$ cd mfs-linux  
+$ cd mdbfs<br />
 $ make
 
-###mkfs.mfs
-$ cd mfs-linux/progs  
-$ make mkfs.mfs
+###mdbfs
+$ cd mdbfs/progs<br />
+$ make mdbfs
 
 ###mfs-fuse
-$ cd mfs-linux/progs  
+$ cd mdbfs/progs<br />
 $ make mfs-fuse
 
-##Test
+##MFS Test
+###Build kernel module, and insert module
+$ cd mdbfs;<br />
+$ ./insmod_mfs.sh
 
-###Build kernel module, move into rootfs for virtual machine
-$ cd mfs-linux/scripts  
-$ ./make.sh ../../linux ../../rootfs.img /mnt/mfs tmp/mfs/
+###Make disk image(disk.img), and mfs format disk.img
+$ cd mdbfs/progs;<br />
+$ ./if_mdbfs.sh<br />
+mdbfs> .format<br />
+device_name, volume_name, size, cluster_size : disk.img -c 1024 -n VNAME<br />
+...some prints...<br />
+mdbfs> .q
 
-###Automatic insmod, and mount
-$ cd mfs-linux/scripts  
-$ ./mount.sh ../../mfs\_hdd /mnt/mfs\_hdd 
+###MFS formatted check
+$ cd mdbfs/progs<br />
+$ sudo apt-get install hexedit<br />
+(if didn't install hexedit.)<br />
+$ hexedit disk.img
 
-###Automatic rmmod, and umount
-$ cd mfs-linux/scripts  
-$ ./umount.sh /mnt/mfs\_hdd
+###Mount disk image, and move to mounted folder
+$ cd mdbfs/progs;<br />
+$ ./mount.sh<br />
+$ cd /mnt/mfs;
 
-##Usage
+##SQLite Test
+###Create and insert
+$ cd /mnt/mfs<br />
+$ [MDBFS_FOLDER_PATH]/progs/mdbfs<br />
+mdbfs> create table tbl1(one varchar(100), two int);<br />
+mdbfs> insert into tbl1(one, two) values("aaa", 10);<br />
+mdbfs> insert into tbl1(one, two) values("bbb", 1234);
 
-###mfs_mod.ko
-$ cd mfs-linux  
-$ make  
-\# insmod mfs_mod.ko
+###Show tables
+mdbfs> .tables<br />
+tbl1
 
-###mkfs.mfs
-$ dd if=/dev/zero of=./new\_mfs\_hdd bs=1M count=4  
-$ cd mfs-linux/progs  
-$ make mkfs.mfs  
-$ ./mkfs.mfs ../../new\_mfs\_hdd
+###Show columns and records
+mdbfs> select * from tbl1;<br />
+aaa | 10<br />
+bbb | 1234
 
-###mfs-fuse
-$ cd mfs-linux/progs  
-$ make mfs-fuse  
-$ ./mfs-fuse ../../mfs\_hdd /mnt/mfs\_hdd
+###Save to file from in-memory
+mdbfs> .save test1.db
 
+###Quit
+mdbfs> .q
 
+###Saved check
+$ ls<br />
+test1.db
