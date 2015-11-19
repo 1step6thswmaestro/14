@@ -65,7 +65,7 @@ mdbfs> insert into tbl1(one, two) values("bbb", 1234);
 mdbfs> .tables<br />
 tbl1
 
-###Show columns
+###Show columns and records
 mdbfs> select * from tbl1;<br />
 aaa | 10<br />
 bbb | 1234
