@@ -66,7 +66,7 @@ mdbfs> .tables<br />
 tbl1
 
 ###Show columns
-mdbfs> select * from tbl1<br />
+mdbfs> select * from tbl1;<br />
 aaa | 10<br />
 bbb | 1234
 
@@ -79,5 +79,3 @@ mdbfs> .q
 ###Saved check
 $ ls<br />
 test1.db
-
-
