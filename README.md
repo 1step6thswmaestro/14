@@ -53,12 +53,31 @@ $ cd mdbfs/progs;<br />
 $ ./mount.sh<br />
 $ cd /mnt/mfs;
 
-##SQLite Test
+##SQLite test
+###SQLite create and insert
+$ cd /mnt/mfs<br />
 $ [MDBFS_FOLDER_PATH]/progs/mdbfs<br />
 mdbfs> create table tbl1(one varchar(100), two int);<br />
 mdbfs> insert into tbl1(one, two) values("aaa", 10);<br />
 mdbfs> insert into tbl1(one, two) values("bbb", 1234);
 
+###SQLite show tables
+mdbfs> .tables<br />
+tbl1
+
+###SQLite show columns
+mdbfs> select * from tbl1<br />
+aaa | 10<br />
+bbb | 1234
+
+###SQLite save to file from in-memory
+mdbfs> .save test1.db
+
+###SQLite quit
+mdbfs> .q
+
+###SQLite saved check
+$ ls<br />
+test1.db
 
 
-mdbfs> .tables
