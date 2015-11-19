@@ -53,7 +53,7 @@ $ cd mdbfs/progs;<br />
 $ ./mount.sh<br />
 $ cd /mnt/mfs;
 
-##SQLite test
+##SQLite Test
 ###Create and insert
 $ cd /mnt/mfs<br />
 $ [MDBFS_FOLDER_PATH]/progs/mdbfs<br />
